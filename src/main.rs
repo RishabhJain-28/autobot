@@ -146,7 +146,12 @@ fn run_interpreter() {
                 match analyzer::analyze_program(&mut variables, &parsed_program) {
                     Ok(analyzed_tree) => {
                         analyzed_program = analyzed_tree;
-                        executor::execute_program(&mut variables, &analyzed_program)
+                        match executor::execute_program(&mut variables, &analyzed_program) {
+                            Ok(_) => {}
+                            Err(err) => {
+                                eprintln!("Error: {}", err)
+                            }
+                        }
                     }
                     Err(err) => {
                         eprintln!("Error: {:?}", err);
