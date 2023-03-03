@@ -29,16 +29,6 @@ pub struct AnalyzedTerm<'a> {
     term: (AnalyzedFactor<'a>, Vec<(TermOperator, AnalyzedFactor<'a>)>),
     type_info: Types,
 }
-// pub type AnalyzedTerm = (
-//     (
-//         AnalyzedFactorTyped,
-//         Vec<(TermOperator, AnalyzedFactorTyped)>,
-//     ),
-//     Types,
-// );
-
-// pub type AnalyzedFactor<'a, T> = (AnalyzedFactorUntyped<'a>, T);
-
 #[derive(Debug)]
 
 pub struct AnalyzedFactor<'a> {
@@ -62,7 +52,7 @@ impl<'a> AnalyzedFactor<'a> {
         }
     }
 
-    fn from_identifier(handle: usize, type_info: Types) -> Self {
+    fn get_identifier(handle: usize, type_info: Types) -> Self {
         Self {
             factor: AnalyzedFactorEnum::Identifier(handle),
             type_info,
@@ -70,7 +60,6 @@ impl<'a> AnalyzedFactor<'a> {
     }
 
     fn from_analysed_expression(expr: AnalyzedExpr<'a>) -> Self {
-        // let type_info  = expr.type_info;
         Self {
             type_info: expr.type_info,
             factor: AnalyzedFactorEnum::SubExpression(Box::<AnalyzedExpr<'a>>::new(expr)),
@@ -89,14 +78,6 @@ pub enum AnalyzedLiteral<'a> {
     String(&'a String),
     Number(f64),
 }
-// #[derive(Debug)]
-// pub struct AnalyzedLiteral<T>(T);
-
-// impl<'a, T> AnalyzedLiteral<T> {
-//     fn new(value: T) -> Self {
-//         Self(value)
-//     }
-// }
 
 pub fn analyze_program<'a>(
     variables: &mut SymbolTable,
@@ -114,18 +95,13 @@ fn analyze_statement<'a>(
     variables: &mut SymbolTable,
     parsed_statement: &'a ParsedStatement,
 ) -> Result<AnalyzedStatement<'a>, String> {
-    eprintln!("{:?}", parsed_statement);
     match parsed_statement {
         ParsedStatement::Assignment(identifier, parsed_expr) => {
             let (handle, identifier_type_info) = variables.find_symbol(identifier)?;
-            // let  analyzed_expr /= analyze_expr(variables, parsed_expr)?;
             let AnalyzedExpr {
                 expr: analyzed_expr,
                 type_info: expected_statement_type,
             } = analyze_expr(variables, parsed_expr)?;
-
-            eprintln!("expected_statement_type: {:?}", expected_statement_type);
-            eprintln!("identifier_type_info: {:?}", identifier_type_info);
 
             if identifier_type_info != expected_statement_type {
                 return Err(format!(
@@ -222,25 +198,13 @@ fn analyze_factor<'a>(
                 AnalyzedLiteral::String(string),
             )),
         },
-        // ParsedFactor::Literal(literal) => match literal {
-        //     ParsedLiteral::Number(val) => Ok(AnalyzedFactor::Literal(AnalysedTypes::Number(*val))),
-        //     ParsedLiteral::String(string) => {
-        //         Ok(AnalyzedFactor::Literal(AnalysedTypes::String(*string)))
-        //     }
-        // },
         ParsedFactor::Identifier(name) => {
             let (handle, type_info) = variables.find_symbol(name)?;
             //CHANGE
-            Ok(AnalyzedFactor::from_identifier(handle, type_info))
+            Ok(AnalyzedFactor::get_identifier(handle, type_info))
         }
         ParsedFactor::SubExpression(expr) => {
-            // let test = Box::new(1.);
-            // let test = *test;
-            // let expr =
             let analysed_expr = analyze_expr(variables, &**expr)?;
-            // Ok(AnalyzedFactor::SubExpression(Box::<AnalyzedExpr>::new(
-            //     expr,
-            // )))
             Ok(AnalyzedFactor::from_analysed_expression(analysed_expr))
         }
     }

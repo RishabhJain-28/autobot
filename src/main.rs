@@ -161,13 +161,12 @@ fn run_interpreter() {
             }
         }
     }
-}
-
-fn input_command() -> String {
-    let mut text = String::new();
-    eprint!("> ");
-    std::io::stdin()
-        .read_line(&mut text)
-        .expect("Cannot read line.");
-    text
+    fn input_command() -> String {
+        let mut text = String::new();
+        eprint!("> ");
+        std::io::stdin()
+            .read_line(&mut text)
+            .expect("Cannot read line.");
+        text
+    }
 }
