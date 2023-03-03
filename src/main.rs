@@ -4,11 +4,13 @@ use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
 
 // mod analyzer;
 // mod compiler;
-// mod executor;
 mod analyzer;
+mod executor;
 mod parser;
+mod runtime;
 mod symbol_table;
 mod types;
+mod value;
 fn main() {
     let mut args = std::env::args();
     let current_path = args.next();
@@ -153,8 +155,17 @@ fn run_interpreter() {
         match analyzer::analyze_program(variables, &parsed_program) {
             Ok(analyzed_tree) => {
                 analyzed_program = analyzed_tree;
-                // executor::execute_program(&mut variables, &analyzed_program)
-                eprintln!("{:?}", analyzed_program);
+
+                //ChANGE: implement an error system
+                //does it need a error system ?
+                match executor::execute_program(variables, &analyzed_program) {
+                    Ok(_) => {
+                        eprintln!("{:?}", analyzed_program);
+                    }
+                    Err(err) => {
+                        eprintln!("Error: {:?}", err);
+                    }
+                };
             }
             Err(err) => {
                 eprintln!("Error: {:?}", err);

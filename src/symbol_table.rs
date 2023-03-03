@@ -1,23 +1,25 @@
 use std::fmt::Display;
 
-use crate::types::Types;
+use crate::{types::Types, value::Value};
 
-type SymbolEntry = (String, SymbolValue);
+// type SymbolValue = Value;
+// type SymbolEntry = (String, SymbolValue);
+type SymbolEntry = (String, Value);
 
-#[derive(Debug, Clone)]
-pub enum SymbolValue {
-    String(String),
-    Number(f64),
-}
+// #[derive(Debug, Clone)]
+// pub enum SymbolValue {
+//     String(String),
+//     Number(f64),
+// }
 
-impl Display for SymbolValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Number(val) => write!(f, "number: {}", val),
-            Self::String(val) => write!(f, "string: {}", val),
-        }
-    }
-}
+// impl Display for SymbolValue {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             Self::Number(val) => write!(f, "number: {}", val),
+//             Self::String(val) => write!(f, "string: {}", val),
+//         }
+//     }
+// }
 
 #[derive(Debug)]
 
@@ -48,13 +50,11 @@ impl<'a> SymbolTable {
             match val_type {
                 Types::Number => {
                     self.entities
-                        .push((identifier.to_string(), SymbolValue::Number(0.0)));
+                        .push((identifier.to_string(), Value::Number(0.0)));
                 }
                 Types::String => {
-                    self.entities.push((
-                        identifier.to_string(),
-                        SymbolValue::String(String::from("")),
-                    ));
+                    self.entities
+                        .push((identifier.to_string(), Value::String(String::from(""))));
                 }
             }
             Ok(self.entities.len() - 1)
@@ -65,8 +65,8 @@ impl<'a> SymbolTable {
     pub fn find_symbol(&self, identifier: &str) -> Result<(usize, Types), String> {
         if let Some(pos) = self.entities.iter().position(|val| val.0 == identifier) {
             let id_type = match self.entities[pos].1 {
-                SymbolValue::Number(_) => Types::Number,
-                SymbolValue::String(_) => Types::String,
+                Value::Number(_) => Types::Number,
+                Value::String(_) => Types::String,
             };
 
             Ok((pos, id_type))
@@ -77,10 +77,10 @@ impl<'a> SymbolTable {
             ))
         }
     }
-    pub fn get_value(&self, handle: usize) -> &SymbolValue {
+    pub fn get_value(&self, handle: usize) -> &Value {
         &self.entities[handle].1
     }
-    pub fn set_value(&mut self, handle: usize, value: SymbolValue) {
+    pub fn set_value(&mut self, handle: usize, value: Value) {
         self.entities[handle].1 = value;
     }
     pub fn iter(&self) -> std::slice::Iter<SymbolEntry> {
@@ -91,7 +91,7 @@ impl<'a> SymbolTable {
     }
 }
 
-impl Into<Types> for SymbolValue {
+impl Into<Types> for Value {
     fn into(self) -> Types {
         match self {
             Self::Number(_) => Types::Number,

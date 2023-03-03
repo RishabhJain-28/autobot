@@ -19,21 +19,21 @@ pub enum AnalyzedStatement<'a> {
 
 #[derive(Debug)]
 pub struct AnalyzedExpr<'a> {
-    expr: (AnalyzedTerm<'a>, Vec<(ExprOperator, AnalyzedTerm<'a>)>),
-    type_info: Types,
+    pub expr: (AnalyzedTerm<'a>, Vec<(ExprOperator, AnalyzedTerm<'a>)>),
+    pub type_info: Types,
 }
 
 #[derive(Debug)]
 
 pub struct AnalyzedTerm<'a> {
-    term: (AnalyzedFactor<'a>, Vec<(TermOperator, AnalyzedFactor<'a>)>),
-    type_info: Types,
+    pub term: (AnalyzedFactor<'a>, Vec<(TermOperator, AnalyzedFactor<'a>)>),
+    pub type_info: Types,
 }
 #[derive(Debug)]
 
 pub struct AnalyzedFactor<'a> {
-    factor: AnalyzedFactorEnum<'a>,
-    type_info: Types,
+    pub factor: AnalyzedFactorEnum<'a>,
+    pub type_info: Types,
 }
 impl<'a> AnalyzedFactor<'a> {
     fn new(factor: AnalyzedFactorEnum<'a>, type_info: Types) -> Self {

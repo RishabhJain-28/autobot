@@ -1,17 +1,16 @@
+use std::ops::Add;
+
 use crate::{
     analyzer::{
-        AnalysedRightSideValue, AnalyzedExpr, AnalyzedFactor, AnalyzedProgram, AnalyzedStatement,
-        AnalyzedTerm,
+        AnalyzedExpr, AnalyzedFactor, AnalyzedFactorEnum, AnalyzedLiteral, AnalyzedProgram,
+        AnalyzedStatement, AnalyzedTerm,
     },
     parser::{ExprOperator, TermOperator},
-    symbol_table::{SymbolTable, SymbolValue},
+    runtime,
+    symbol_table::SymbolTable,
     types::Types,
+    value::{Value, self},
 };
-
-enum Value {
-    String(String),
-    Number(f64),
-}
 
 fn get_number(input: Value) -> f64 {
     match input {
@@ -27,115 +26,166 @@ fn get_string(input: Value) -> String {
 }
 
 fn evaluate_factor(variables: &SymbolTable, factor: &AnalyzedFactor) -> Value {
-    match factor {
-        AnalyzedFactor::Identifier(handle) => match variables.get_value(*handle) {
-            SymbolValue::Number(val) => Value::Number(*val),
-            SymbolValue::String(str) => Value::String(str.to_string()),
+    match &factor.factor {
+        //CAHNGE
+        AnalyzedFactorEnum::Identifier(handle) => *variables.get_value(*handle),
+        // AnalyzedFactorEnum::Identifier(handle) => Value::Number(0.0),
+        // AnalyzedFactorEnum::Identifier(handle) => match variables.get_value(handle) {
+        //     SymbolValue::Number(val) => Value::Number(*val),
+        //     //CHANGE: remove to string
+        //     SymbolValue::String(str) => Value::String(str.to_string()),
+        // },
+        AnalyzedFactorEnum::Literal(literal) => match literal {
+            //CHANGE: remove clone
+            AnalyzedLiteral::String(string) => Value::String((**string).clone()),
+            AnalyzedLiteral::Number(number) => Value::Number(*number),
         },
-        AnalyzedFactor::Literal(val) => Value::Number(*val),
-        AnalyzedFactor::SubExpression(expr) => Value::Number(evaluate_expr(variables, expr)),
+        AnalyzedFactorEnum::SubExpression(expr) => {
+            evaluate_expr(variables, &*expr)
+            // let evaluated_expr = evaluate_expr(variables, &*expr);
+            // match evaluated_expr. {
+
+            // }
+            // change
+            // Value::Number(0.0)
+        }
     }
 }
 
-fn evaluate_term(variables: &SymbolTable, term: &AnalyzedTerm) -> f64 {
+fn evaluate_term(variables: &SymbolTable, term: &AnalyzedTerm) -> Value {
+    let type_info = &term.type_info;
+    let term = &term.term;
     let mut result = evaluate_factor(variables, &term.0);
-    let mut result = get_number(result);
+    // let mut result = match type_info {
+
+    // }
+
+    // get_number(result);
 
     for factor in &term.1 {
         let val = evaluate_factor(variables, &factor.1);
-        let val = get_number(val);
+        // let val = get_number(val);
+
         // let value = match get_number(val) {
         //     Ok(v) => v,
         //     Err(err) => panic!("{}", err),
         // };
 
         match factor.0 {
-            TermOperator::Multiply => result *= val,
-            TermOperator::Divide => result /= val,
+            TermOperator::Multiply => result = result * val,
+            TermOperator::Divide => result = result / val,
         }
     }
     result
 }
 
-fn evaluate_expr(variables: &SymbolTable, expr: &AnalyzedExpr) -> f64 {
-    let mut result = evaluate_term(variables, &expr.0);
+fn evaluate_expr(variables: &SymbolTable, expr: &AnalyzedExpr) -> Value {
+    let mut result = evaluate_term(variables, &expr.expr.0);
 
-    for term in &expr.1 {
+    for term in &expr.expr.1 {
         match term.0 {
-            ExprOperator::Add => result += evaluate_term(variables, &term.1),
-            ExprOperator::Subtract => result -= evaluate_term(variables, &term.1),
+            ExprOperator::Add => result = result + evaluate_term(variables, &term.1),
+            ExprOperator::Subtract => result = result - evaluate_term(variables, &term.1),
         }
     }
     result
 }
 
-fn execute_statement(variables: &mut SymbolTable, statement: &AnalyzedStatement) {
+fn execute_statement(
+    variables: &mut SymbolTable,
+    statement: &AnalyzedStatement,
+) -> Result<(), String> {
     eprintln!("in execute_statement rhv: {:?}", statement);
 
     match statement {
-        AnalyzedStatement::Declaration(_) => {}
-        AnalyzedStatement::Assignment(handle, right_hand_value) => {
-            match right_hand_value {
-                AnalysedRightSideValue::Expression(expr) => {
-                    eprintln!("in execute_statement rhv: {:?}", expr);
+        AnalyzedStatement::Declaration(_) => Ok(()),
+        AnalyzedStatement::Assignment(handle, expr) => {
+            let result = evaluate_expr(variables, expr);
 
-                    let val = evaluate_expr(variables, expr);
-                    variables.set_value(*handle, SymbolValue::Number(val))
-                }
-                AnalysedRightSideValue::String(str) => {
-                    eprintln!("in string analysed rhv: {}", str);
-                    variables.set_value(*handle, SymbolValue::String((**str).clone()))
-                }
-            }
+            variables.set_value(*handle, result);
+            Ok(())
 
-            // variables.set_value(*handle, evaluate_expr(variables, expr))
         }
-        AnalyzedStatement::InputOperation(handle) => {
-            let mut text = String::new();
-            eprint!("? ");
-            std::io::stdin()
-                .read_line(&mut text)
-                .expect("Cannot read line.");
-
-            let id_type = variables.get_type(*handle);
-            let value;
-            match id_type {
-                Types::Number => {
-                    value = match text.trim().parse::<f64>() {
-                        Ok(val) => SymbolValue::Number(val),
-                        Err(_) => {
-                            panic!("expected input as number")
-                        }
-                    };
-                }
+        AnalyzedStatement::InputOperation(handle, type_info) => {
+            match type_info {
                 Types::String => {
-                    value = match text.trim().parse::<String>() {
-                        Ok(str) => SymbolValue::String(str),
-                        Err(_) => {
-                            panic!("expected input as String")
-                        }
+                    let val = runtime::input_type::<String>();
+                    
+                    let val = match val {
+Ok(val)=>val, 
+Err(err)=>{
+   return Err(format!(
+            "Invalid input, Expected {}, {}",
+            Types::String,
+         err
+        ));
+}                        
                     };
+
+                    variables.set_value(*handle, Value::String(val));
                 }
-            }
+                Types::Number => {
+                    let val = runtime::input_type::<f64>();
+                    let val = match val {
+                        Ok(val)=>val, 
+                        Err(err)=>{
+                           return Err(format!(
+                                    "Invalid input, Expected {}, {}",
+                                    Types::Number,
+                                 err
+                                ));
+                        }                  
+                        };                  
+                    variables.set_value(*handle, Value::Number(val));
+                }
+            };
 
-            variables.set_value(*handle, value);
+            Ok(())
         }
-        AnalyzedStatement::OutputOperation(right_hand_value) => match right_hand_value {
-            AnalysedRightSideValue::Expression(expr) => {
-                eprintln!("expr in out {:?}", expr);
-                println!("{}", evaluate_expr(variables, expr))
-            }
-            AnalysedRightSideValue::String(str) => {
-                eprintln!("string in out{:?}", str);
 
-                println!("{}", str)
-            }
-        },
+        AnalyzedStatement::OutputOperation(expr) => {
+            let val= evaluate_expr(variables, expr);
+            println!("{}",val );
+Ok(())
+        }
+        // AnalyzedStatement::OutputOperation(expr) => match expr.expr {
+            
+        //     AnalysedRightSideValue::Expression(expr) => {
+        //         eprintln!("expr in out {:?}", expr);
+        //         println!("{}", evaluate_expr(variables, expr))
+        //         Ok(())
+
+        //     }
+        //     AnalysedRightSideValue::String(str) => {
+        //         eprintln!("string in out{:?}", str);
+
+        //         println!("{}", str)
+        //         Ok(())
+
+        //     }
+        // },
+        // AnalyzedStatement::OutputOperation(expr) => match expr.expr {
+            
+        //     AnalysedRightSideValue::Expression(expr) => {
+        //         eprintln!("expr in out {:?}", expr);
+        //         println!("{}", evaluate_expr(variables, expr))
+        //         Ok(())
+
+        //     }
+        //     AnalysedRightSideValue::String(str) => {
+        //         eprintln!("string in out{:?}", str);
+
+        //         println!("{}", str)
+        //         Ok(())
+
+        //     }
+        // },
     }
 }
 
-pub fn execute_program(variables: &mut SymbolTable, analyzed_program: &AnalyzedProgram) {
+pub fn execute_program(variables: &mut SymbolTable, analyzed_program: &AnalyzedProgram)->Result<(),String> {
     for statement in analyzed_program {
-        execute_statement(variables, statement)
+        execute_statement(variables, statement)?
     }
+    Ok(())
 }
