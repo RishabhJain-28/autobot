@@ -1,36 +1,103 @@
 //CSG : context sensitive grammer
 use crate::{
     parser::{
-        ExprOperator, ParsedExpr, ParsedFactor, ParsedProgram, ParsedRightSideValue,
-        ParsedStatement, ParsedTerm, TermOperator,
+        ExprOperator, ParsedExpr, ParsedFactor, ParsedLiteral, ParsedProgram, ParsedStatement,
+        ParsedTerm, TermOperator,
     },
     symbol_table::SymbolTable,
-    types::{StringLiteral, Types},
+    types::Types,
 };
 
 pub type AnalyzedProgram<'a> = Vec<AnalyzedStatement<'a>>;
 #[derive(Debug)]
 pub enum AnalyzedStatement<'a> {
     Declaration(usize),
-    InputOperation(usize),
-    OutputOperation(AnalysedRightSideValue<'a>),
-    Assignment(usize, AnalysedRightSideValue<'a>),
+    InputOperation(usize, Types),
+    OutputOperation(AnalyzedExpr<'a>),
+    Assignment(usize, AnalyzedExpr<'a>),
 }
 
 #[derive(Debug)]
-pub enum AnalysedRightSideValue<'a> {
-    Expression(AnalyzedExpr),
-    String(&'a StringLiteral),
+pub struct AnalyzedExpr<'a> {
+    expr: (AnalyzedTerm<'a>, Vec<(ExprOperator, AnalyzedTerm<'a>)>),
+    type_info: Types,
 }
-pub type AnalyzedExpr = (AnalyzedTerm, Vec<(ExprOperator, AnalyzedTerm)>);
-pub type AnalyzedTerm = (AnalyzedFactor, Vec<(TermOperator, AnalyzedFactor)>);
 
 #[derive(Debug)]
-pub enum AnalyzedFactor {
-    Literal(f64),
+
+pub struct AnalyzedTerm<'a> {
+    term: (AnalyzedFactor<'a>, Vec<(TermOperator, AnalyzedFactor<'a>)>),
+    type_info: Types,
+}
+// pub type AnalyzedTerm = (
+//     (
+//         AnalyzedFactorTyped,
+//         Vec<(TermOperator, AnalyzedFactorTyped)>,
+//     ),
+//     Types,
+// );
+
+// pub type AnalyzedFactor<'a, T> = (AnalyzedFactorUntyped<'a>, T);
+
+#[derive(Debug)]
+
+pub struct AnalyzedFactor<'a> {
+    factor: AnalyzedFactorEnum<'a>,
+    type_info: Types,
+}
+impl<'a> AnalyzedFactor<'a> {
+    fn new(factor: AnalyzedFactorEnum<'a>, type_info: Types) -> Self {
+        Self { factor, type_info }
+    }
+    fn from_literal(literal: AnalyzedLiteral<'a>) -> Self {
+        match literal {
+            AnalyzedLiteral::Number(_) => Self {
+                factor: AnalyzedFactorEnum::Literal(literal),
+                type_info: Types::Number,
+            },
+            AnalyzedLiteral::String(_) => Self {
+                factor: AnalyzedFactorEnum::Literal(literal),
+                type_info: Types::String,
+            },
+        }
+    }
+
+    fn from_identifier(handle: usize, type_info: Types) -> Self {
+        Self {
+            factor: AnalyzedFactorEnum::Identifier(handle),
+            type_info,
+        }
+    }
+
+    fn from_analysed_expression(expr: AnalyzedExpr<'a>) -> Self {
+        // let type_info  = expr.type_info;
+        Self {
+            type_info: expr.type_info,
+            factor: AnalyzedFactorEnum::SubExpression(Box::<AnalyzedExpr<'a>>::new(expr)),
+        }
+    }
+}
+#[derive(Debug)]
+pub enum AnalyzedFactorEnum<'a> {
+    Literal(AnalyzedLiteral<'a>),
     Identifier(usize),
-    SubExpression(Box<AnalyzedExpr>),
+    SubExpression(Box<AnalyzedExpr<'a>>),
 }
+#[derive(Debug)]
+pub enum AnalyzedLiteral<'a> {
+    //CHANGE
+    String(&'a String),
+    Number(f64),
+}
+// #[derive(Debug)]
+// pub struct AnalyzedLiteral<T>(T);
+
+// impl<'a, T> AnalyzedLiteral<T> {
+//     fn new(value: T) -> Self {
+//         Self(value)
+//     }
+// }
+
 pub fn analyze_program<'a>(
     variables: &mut SymbolTable,
     parsed_program: &'a ParsedProgram,
@@ -47,88 +114,134 @@ fn analyze_statement<'a>(
     variables: &mut SymbolTable,
     parsed_statement: &'a ParsedStatement,
 ) -> Result<AnalyzedStatement<'a>, String> {
+    eprintln!("{:?}", parsed_statement);
     match parsed_statement {
-        ParsedStatement::Assignment(identifier, right_hand_value) => {
-            let (handle, id_type) = variables.find_symbol(identifier)?;
+        ParsedStatement::Assignment(identifier, parsed_expr) => {
+            let (handle, identifier_type_info) = variables.find_symbol(identifier)?;
+            // let  analyzed_expr /= analyze_expr(variables, parsed_expr)?;
+            let AnalyzedExpr {
+                expr: analyzed_expr,
+                type_info: expected_statement_type,
+            } = analyze_expr(variables, parsed_expr)?;
 
-            match right_hand_value {
-                ParsedRightSideValue::Expression(expr) => match id_type {
-                    Types::Number => {
-                        let analyzed_expr = analyze_expr(variables, expr)?;
-                        Ok(AnalyzedStatement::Assignment(
-                            handle,
-                            AnalysedRightSideValue::Expression(analyzed_expr),
-                        ))
-                    }
-                    Types::String => Result::Err("Expected expression found string".to_string()),
+            eprintln!("expected_statement_type: {:?}", expected_statement_type);
+            eprintln!("identifier_type_info: {:?}", identifier_type_info);
+
+            if identifier_type_info != expected_statement_type {
+                return Err(format!(
+                    "[illegal statement] : {:?} \n Mismatched types=> Expected {:?}, found {:?}",
+                    parsed_statement, expected_statement_type, identifier_type_info
+                ));
+            };
+
+            Ok(AnalyzedStatement::Assignment(
+                handle,
+                AnalyzedExpr {
+                    expr: analyzed_expr,
+                    type_info: identifier_type_info,
                 },
-                ParsedRightSideValue::String(str) => match id_type {
-                    Types::Number => Result::Err("Expected string found expression".to_string()),
-                    Types::String => {
-                        // let analyzed_string = analyze_string(variables, expr)?;
-                        // let analyzed_expr = analyze_expr(variables, expr)?;
-                        Ok(AnalyzedStatement::Assignment(
-                            handle,
-                            AnalysedRightSideValue::String(str),
-                        ))
-                    }
-                },
-            }
+            ))
         }
-        ParsedStatement::Declaration(identifier, val_type) => {
-            let handle = variables.insert_symbol(identifier, *val_type)?;
+        ParsedStatement::Declaration(identifier, id_type) => {
+            let handle = variables.insert_symbol(identifier, *id_type)?;
             Ok(AnalyzedStatement::Declaration(handle))
         }
         ParsedStatement::InputOperation(identifier) => {
-            let (handle, _) = variables.find_symbol(identifier)?;
-            Ok(AnalyzedStatement::InputOperation(handle))
+            let (handle, type_info) = variables.find_symbol(identifier)?;
+            Ok(AnalyzedStatement::InputOperation(handle, type_info))
         }
-        ParsedStatement::OutputOperation(right_hand_value) => match right_hand_value {
-            ParsedRightSideValue::Expression(expr) => {
-                let analyzed_expr = analyze_expr(variables, expr)?;
-                Ok(AnalyzedStatement::OutputOperation(
-                    AnalysedRightSideValue::Expression(analyzed_expr),
-                ))
-            }
-            ParsedRightSideValue::String(str) => Ok(AnalyzedStatement::OutputOperation(
-                AnalysedRightSideValue::String(str),
-            )),
-        },
+        ParsedStatement::OutputOperation(expr) => {
+            let analyzed_expr = analyze_expr(variables, expr)?;
+            Ok(AnalyzedStatement::OutputOperation(analyzed_expr))
+        }
     }
 }
-fn analyze_expr(
+
+fn analyze_expr<'a>(
     variables: &mut SymbolTable,
-    parsed_expr: &ParsedExpr,
-) -> Result<AnalyzedExpr, String> {
+    parsed_expr: &'a ParsedExpr,
+) -> Result<AnalyzedExpr<'a>, String> {
     let first_term = analyze_term(variables, &parsed_expr.0)?;
+
+    let expected_expr_type = first_term.type_info;
+
     let mut other_terms = Vec::<(ExprOperator, AnalyzedTerm)>::new();
     for term in &parsed_expr.1 {
-        other_terms.push((term.0, analyze_term(variables, &term.1)?));
+        let analysed_term = analyze_term(variables, &term.1)?;
+        if analysed_term.type_info != expected_expr_type {
+            return Err(format!(
+                "[illegal factor] : {:?} \n Mismatched types=> Expected {:?}, found {:?}",
+                parsed_expr, expected_expr_type, analysed_term.type_info
+            ));
+        };
+
+        other_terms.push((term.0, analysed_term));
     }
-    Ok((first_term, other_terms))
+    //CHANGE
+    Ok(AnalyzedExpr {
+        type_info: first_term.type_info,
+        expr: (first_term, other_terms),
+    })
 }
-fn analyze_term(
+
+fn analyze_term<'a>(
     variables: &mut SymbolTable,
-    parsed_term: &ParsedTerm,
-) -> Result<AnalyzedTerm, String> {
+    parsed_term: &'a ParsedTerm,
+) -> Result<AnalyzedTerm<'a>, String> {
     let first_factor = analyze_factor(variables, &parsed_term.0)?;
+    let expected_term_type = first_factor.type_info;
+
     let mut other_factors = Vec::<(TermOperator, AnalyzedFactor)>::new();
     for factor in &parsed_term.1 {
-        other_factors.push((factor.0, analyze_factor(variables, &factor.1)?));
+        let analysed_fac = analyze_factor(variables, &factor.1)?;
+
+        if analysed_fac.type_info != expected_term_type {
+            return Err(format!(
+                "[illegal term] : {:?} \n Mismatched types=> Expected {:?}, found {:?}",
+                parsed_term, expected_term_type, analysed_fac.type_info
+            ));
+        };
+        other_factors.push((factor.0, analysed_fac));
     }
-    Ok((first_factor, other_factors))
+    Ok(AnalyzedTerm {
+        type_info: expected_term_type,
+        term: (first_factor, other_factors),
+    })
 }
-fn analyze_factor(
+
+fn analyze_factor<'a>(
     variables: &mut SymbolTable,
-    parsed_factor: &ParsedFactor,
-) -> Result<AnalyzedFactor, String> {
+    parsed_factor: &'a ParsedFactor,
+) -> Result<AnalyzedFactor<'a>, String> {
     match parsed_factor {
-        ParsedFactor::Literal(value) => Ok(AnalyzedFactor::Literal(*value)),
+        ParsedFactor::Literal(literal) => match literal {
+            ParsedLiteral::Number(val) => {
+                Ok(AnalyzedFactor::from_literal(AnalyzedLiteral::Number(*val)))
+            }
+            ParsedLiteral::String(string) => Ok(AnalyzedFactor::from_literal(
+                AnalyzedLiteral::String(string),
+            )),
+        },
+        // ParsedFactor::Literal(literal) => match literal {
+        //     ParsedLiteral::Number(val) => Ok(AnalyzedFactor::Literal(AnalysedTypes::Number(*val))),
+        //     ParsedLiteral::String(string) => {
+        //         Ok(AnalyzedFactor::Literal(AnalysedTypes::String(*string)))
+        //     }
+        // },
         ParsedFactor::Identifier(name) => {
-            Ok(AnalyzedFactor::Identifier(variables.find_symbol(name)?.0))
+            let (handle, type_info) = variables.find_symbol(name)?;
+            //CHANGE
+            Ok(AnalyzedFactor::from_identifier(handle, type_info))
         }
-        ParsedFactor::SubExpression(expr) => Ok(AnalyzedFactor::SubExpression(
-            Box::<AnalyzedExpr>::new(analyze_expr(variables, expr)?),
-        )),
+        ParsedFactor::SubExpression(expr) => {
+            // let test = Box::new(1.);
+            // let test = *test;
+            // let expr =
+            let analysed_expr = analyze_expr(variables, &**expr)?;
+            // Ok(AnalyzedFactor::SubExpression(Box::<AnalyzedExpr>::new(
+            //     expr,
+            // )))
+            Ok(AnalyzedFactor::from_analysed_expression(analysed_expr))
+        }
     }
 }

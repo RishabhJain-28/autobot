@@ -12,7 +12,6 @@ pub enum SymbolValue {
 
 impl Display for SymbolValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // write!(f, "{}", self.)
         match self {
             Self::Number(val) => write!(f, "number: {}", val),
             Self::String(val) => write!(f, "string: {}", val),
@@ -90,11 +89,13 @@ impl<'a> SymbolTable {
     pub fn get_name(&self, handle: usize) -> String {
         self.entities[handle].0.clone()
     }
+}
 
-    pub fn get_type(&self, handle: usize) -> Types {
-        match self.entities[handle].1 {
-            SymbolValue::Number(_) => Types::Number,
-            SymbolValue::String(_) => Types::String,
+impl Into<Types> for SymbolValue {
+    fn into(self) -> Types {
+        match self {
+            Self::Number(_) => Types::Number,
+            Self::String(_) => Types::String,
         }
     }
 }

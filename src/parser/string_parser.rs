@@ -20,8 +20,6 @@ use nom::multi::fold_many0;
 use nom::sequence::{delimited, preceded};
 use nom::IResult;
 
-use super::ParsedRightSideValue;
-
 // parser combinators are constructed from the bottom up:
 // first we write parsers for the smallest elements (escaped characters),
 // then combine them into larger parsers.
@@ -134,7 +132,7 @@ where
 
 /// Parse a string. Use a loop of parse_fragment and push all of the fragments
 /// into an output string.
-pub fn parse_string(input: &str) -> IResult<&str, ParsedRightSideValue> {
+pub fn parse_string(input: &str) -> IResult<&str, String> {
     // fold is the equivalent of iterator::fold. It runs a parser in a loop,
     // and for each output value, calls a folding function on each output value.
     let build_string = fold_many0(
@@ -158,9 +156,7 @@ pub fn parse_string(input: &str) -> IResult<&str, ParsedRightSideValue> {
     // " character, the closing delimiter " would never match. When using
     // `delimited` with a looping parser (like fold), be sure that the
     // loop won't accidentally match your closing delimiter!
-    map(delimited(char('"'), build_string, char('"')), |v| {
-        ParsedRightSideValue::String(v)
-    })(input)
+    delimited(char('"'), build_string, char('"'))(input)
 }
 
 // fn main() {

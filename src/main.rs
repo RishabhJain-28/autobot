@@ -1,8 +1,11 @@
 use std::{ffi::OsStr, path::Path};
 
-mod analyzer;
+use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
+
+// mod analyzer;
 // mod compiler;
-mod executor;
+// mod executor;
+mod analyzer;
 mod parser;
 mod symbol_table;
 mod types;
@@ -81,7 +84,7 @@ fn proceess_file(_current_path: &str, source_path: &str) {
     }
     eprintln!("analysed program {:?}", parsed_program);
 
-    return;
+    // return;
     // let target_dir = source_path
     //     .parent()
     //     .unwrap_or(Path::new("/"))
@@ -121,39 +124,42 @@ fn run_interpreter() {
             "v" | "variables" => {
                 eprintln!("Variables:");
                 for v in variables.iter() {
-                    eprintln!("{} : {}", v.0, v.1)
+                    eprintln!("{} => {}", v.0, v.1)
                 }
             }
 
-            input => {
-                let parsed_program;
-                match parser::parse_program(&input) {
-                    Ok((rest, syntax_tree)) => {
-                        let trimmed_rest = rest.trim();
-                        if trimmed_rest.len() > 0 {
-                            eprintln!("Unparsed input: `{}`.", trimmed_rest);
-                            return;
-                        }
-                        parsed_program = syntax_tree;
-                    }
-                    Err(err) => {
-                        eprintln!("Error: {:?}", err);
-                        return;
-                    }
-                }
+            input => parse_input(&mut variables, input),
+        }
+    }
+}
 
-                let analyzed_program;
-                match analyzer::analyze_program(&mut variables, &parsed_program) {
-                    Ok(analyzed_tree) => {
-                        analyzed_program = analyzed_tree;
-                        executor::execute_program(&mut variables, &analyzed_program)
-                    }
-                    Err(err) => {
-                        eprintln!("Error: {:?}", err);
-                        return;
-                    }
-                }
+fn parse_input(variables: &mut SymbolTable, input: &str) {
+    let parsed_program;
+    match parser::parse_program(&input) {
+        Ok((rest, syntax_tree)) => {
+            let trimmed_rest = rest.trim();
+            if trimmed_rest.len() > 0 {
+                eprintln!("Unparsed input: `{}`.", trimmed_rest);
             }
+            parsed_program = syntax_tree;
+            // eprintln!("{:?}", parsed_program);
+            execute_parsed_program(variables, parsed_program);
+        }
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
+        }
+    }
+}
+fn execute_parsed_program(variables: &mut SymbolTable, parsed_program: ParsedProgram) {
+    let analyzed_program;
+    match analyzer::analyze_program(variables, &parsed_program) {
+        Ok(analyzed_tree) => {
+            analyzed_program = analyzed_tree;
+            // executor::execute_program(&mut variables, &analyzed_program)
+            eprintln!("{:?}", analyzed_program);
+        }
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
         }
     }
 }
