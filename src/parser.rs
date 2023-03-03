@@ -12,16 +12,14 @@ use nom::{
 };
 use string_parser::parse_string;
 
-use crate::types::Types;
+use crate::runtime::types::Type;
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
 
 #[derive(Debug, PartialEq)]
 pub enum ParsedStatement<'a> {
-    Declaration(&'a str, Types),
+    Declaration(&'a str, Type),
     InputOperation(&'a str),
-    // OutputOperation(ParsedRightSideValue<'a>),
-    // Assignment(&'a str, ParsedRightSideValue<'a>),
     OutputOperation(ParsedExpr<'a>),
     Assignment(&'a str, ParsedExpr<'a>),
 }
@@ -158,15 +156,15 @@ fn parse_subexpr<'a>(input: &str) -> IResult<&str, ParsedExpr> {
     )(input)
 }
 
-fn parse_type(input: &str) -> IResult<&str, Types> {
+fn parse_type(input: &str) -> IResult<&str, Type> {
     alt((
-        map(tag("number"), |_| Types::Number),
-        map(tag("string"), |_| Types::String),
+        map(tag("number"), |_| Type::Number),
+        map(tag("string"), |_| Type::String),
     ))(input)
 }
 
 fn parse_identifier(input: &str) -> IResult<&str, &str> {
-    // remove keywords like string, number, etc
+    // TODO: remove keywords like string, number, etc
     alpha1(input)
 }
 

@@ -1,41 +1,21 @@
-use std::fmt::Display;
+use crate::runtime::{types::Type, value::Value};
 
-use crate::{types::Types, value::Value};
-
-// type SymbolValue = Value;
-// type SymbolEntry = (String, SymbolValue);
 type SymbolEntry = (String, Value);
 
-// #[derive(Debug, Clone)]
-// pub enum SymbolValue {
-//     String(String),
-//     Number(f64),
-// }
-
-// impl Display for SymbolValue {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             Self::Number(val) => write!(f, "number: {}", val),
-//             Self::String(val) => write!(f, "string: {}", val),
-//         }
-//     }
-// }
-
 #[derive(Debug)]
-
 pub struct SymbolTable {
+    //TODO : imporve use map instead of vector
     entities: Vec<SymbolEntry>,
 }
 
-impl<'a> SymbolTable {
+impl SymbolTable {
     pub fn new() -> Self {
         return SymbolTable {
             entities: Vec::new(),
         };
     }
 
-    //imporve
-    pub fn insert_symbol(&mut self, identifier: &str, val_type: Types) -> Result<usize, String> {
+    pub fn insert_symbol(&mut self, identifier: &str, val_type: Type) -> Result<usize, String> {
         if self
             .entities
             .iter()
@@ -48,11 +28,11 @@ impl<'a> SymbolTable {
             ))
         } else {
             match val_type {
-                Types::Number => {
+                Type::Number => {
                     self.entities
                         .push((identifier.to_string(), Value::Number(0.0)));
                 }
-                Types::String => {
+                Type::String => {
                     self.entities
                         .push((identifier.to_string(), Value::String(String::from(""))));
                 }
@@ -60,25 +40,24 @@ impl<'a> SymbolTable {
             Ok(self.entities.len() - 1)
         }
     }
-    //imporve
 
-    pub fn find_symbol(&self, identifier: &str) -> Result<(usize, Types), String> {
+    pub fn find_symbol(&self, identifier: &str) -> Result<(usize, Type), String> {
         if let Some(pos) = self.entities.iter().position(|val| val.0 == identifier) {
             let id_type = match self.entities[pos].1 {
-                Value::Number(_) => Types::Number,
-                Value::String(_) => Types::String,
+                Value::Number(_) => Type::Number,
+                Value::String(_) => Type::String,
             };
 
             Ok((pos, id_type))
         } else {
             Err(format!(
-                "Error: Identifier '{}' used before having been declared.",
+                "Identifier '{}' used before having been declared.",
                 identifier
             ))
         }
     }
-    pub fn get_value(&self, handle: usize) -> &Value {
-        &self.entities[handle].1
+    pub fn get_value(&self, handle: usize) -> Value {
+        Value::clone(&self.entities[handle].1)
     }
     pub fn set_value(&mut self, handle: usize, value: Value) {
         self.entities[handle].1 = value;
@@ -86,16 +65,13 @@ impl<'a> SymbolTable {
     pub fn iter(&self) -> std::slice::Iter<SymbolEntry> {
         self.entities.iter()
     }
-    pub fn get_name(&self, handle: usize) -> String {
-        self.entities[handle].0.clone()
-    }
 }
 
-impl Into<Types> for Value {
-    fn into(self) -> Types {
+impl<'a> Into<Type> for Value {
+    fn into(self) -> Type {
         match self {
-            Self::Number(_) => Types::Number,
-            Self::String(_) => Types::String,
+            Self::Number(_) => Type::Number,
+            Self::String(_) => Type::String,
         }
     }
 }

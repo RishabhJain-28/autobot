@@ -2,15 +2,12 @@ use std::{ffi::OsStr, path::Path};
 
 use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
 
-// mod analyzer;
 // mod compiler;
 mod analyzer;
 mod executor;
 mod parser;
 mod runtime;
 mod symbol_table;
-mod types;
-mod value;
 fn main() {
     let mut args = std::env::args();
     let current_path = args.next();
@@ -69,9 +66,6 @@ fn proceess_file(_current_path: &str, source_path: &str) {
             return;
         }
     }
-    // eprintln!("parsed program {:?}", parsed_program);
-    // return;
-    //
 
     let analyzed_program;
     let mut variables = symbol_table::SymbolTable::new();
@@ -126,50 +120,11 @@ fn run_interpreter() {
             "v" | "variables" => {
                 eprintln!("Variables:");
                 for v in variables.iter() {
-                    eprintln!("{} => {}", v.0, v.1)
+                    eprintln!("{} => {:?}", v.0, v.1)
                 }
             }
 
             input => parse_input(&mut variables, input),
-        }
-    }
-    fn parse_input(variables: &mut SymbolTable, input: &str) {
-        let parsed_program;
-        match parser::parse_program(&input) {
-            Ok((rest, syntax_tree)) => {
-                let trimmed_rest = rest.trim();
-                if trimmed_rest.len() > 0 {
-                    eprintln!("Unparsed input: `{}`.", trimmed_rest);
-                }
-                parsed_program = syntax_tree;
-                // eprintln!("{:?}", parsed_program);
-                execute_parsed_program(variables, parsed_program);
-            }
-            Err(err) => {
-                eprintln!("Error: {:?}", err);
-            }
-        }
-    }
-    fn execute_parsed_program(variables: &mut SymbolTable, parsed_program: ParsedProgram) {
-        let analyzed_program;
-        match analyzer::analyze_program(variables, &parsed_program) {
-            Ok(analyzed_tree) => {
-                analyzed_program = analyzed_tree;
-
-                //ChANGE: implement an error system
-                //does it need a error system ?
-                match executor::execute_program(variables, &analyzed_program) {
-                    Ok(_) => {
-                        eprintln!("{:?}", analyzed_program);
-                    }
-                    Err(err) => {
-                        eprintln!("Error: {:?}", err);
-                    }
-                };
-            }
-            Err(err) => {
-                eprintln!("Error: {:?}", err);
-            }
         }
     }
     fn input_command() -> String {
@@ -179,5 +134,36 @@ fn run_interpreter() {
             .read_line(&mut text)
             .expect("Cannot read line.");
         text
+    }
+
+    fn parse_input(variables: &mut SymbolTable, input: &str) {
+        match parser::parse_program(&input) {
+            Ok((rest, syntax_tree)) => {
+                let trimmed_rest = rest.trim();
+                if trimmed_rest.len() > 0 {
+                    eprintln!("Unparsed input: `{}`.", trimmed_rest);
+                }
+
+                execute_parsed_program(variables, syntax_tree);
+            }
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+            }
+        }
+    }
+    fn execute_parsed_program(variables: &mut SymbolTable, parsed_program: ParsedProgram) {
+        match analyzer::analyze_program(variables, &parsed_program) {
+            Ok(analyzed_tree) => {
+                match executor::execute_program(variables, &analyzed_tree) {
+                    Ok(_) => (),
+                    Err(err) => {
+                        eprintln!("Error: {:?}", err);
+                    }
+                };
+            }
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+            }
+        }
     }
 }

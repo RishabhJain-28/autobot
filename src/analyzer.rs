@@ -4,15 +4,15 @@ use crate::{
         ExprOperator, ParsedExpr, ParsedFactor, ParsedLiteral, ParsedProgram, ParsedStatement,
         ParsedTerm, TermOperator,
     },
+    runtime::types::Type,
     symbol_table::SymbolTable,
-    types::Types,
 };
 
 pub type AnalyzedProgram<'a> = Vec<AnalyzedStatement<'a>>;
 #[derive(Debug)]
 pub enum AnalyzedStatement<'a> {
     Declaration(usize),
-    InputOperation(usize, Types),
+    InputOperation(usize, Type),
     OutputOperation(AnalyzedExpr<'a>),
     Assignment(usize, AnalyzedExpr<'a>),
 }
@@ -20,39 +20,36 @@ pub enum AnalyzedStatement<'a> {
 #[derive(Debug)]
 pub struct AnalyzedExpr<'a> {
     pub expr: (AnalyzedTerm<'a>, Vec<(ExprOperator, AnalyzedTerm<'a>)>),
-    pub type_info: Types,
+    pub type_info: Type,
 }
 
 #[derive(Debug)]
 
 pub struct AnalyzedTerm<'a> {
     pub term: (AnalyzedFactor<'a>, Vec<(TermOperator, AnalyzedFactor<'a>)>),
-    pub type_info: Types,
+    pub type_info: Type,
 }
 #[derive(Debug)]
 
 pub struct AnalyzedFactor<'a> {
     pub factor: AnalyzedFactorEnum<'a>,
-    pub type_info: Types,
+    pub type_info: Type,
 }
 impl<'a> AnalyzedFactor<'a> {
-    fn new(factor: AnalyzedFactorEnum<'a>, type_info: Types) -> Self {
-        Self { factor, type_info }
-    }
     fn from_literal(literal: AnalyzedLiteral<'a>) -> Self {
         match literal {
             AnalyzedLiteral::Number(_) => Self {
                 factor: AnalyzedFactorEnum::Literal(literal),
-                type_info: Types::Number,
+                type_info: Type::Number,
             },
             AnalyzedLiteral::String(_) => Self {
                 factor: AnalyzedFactorEnum::Literal(literal),
-                type_info: Types::String,
+                type_info: Type::String,
             },
         }
     }
 
-    fn get_identifier(handle: usize, type_info: Types) -> Self {
+    fn get_identifier(handle: usize, type_info: Type) -> Self {
         Self {
             factor: AnalyzedFactorEnum::Identifier(handle),
             type_info,
@@ -74,7 +71,6 @@ pub enum AnalyzedFactorEnum<'a> {
 }
 #[derive(Debug)]
 pub enum AnalyzedLiteral<'a> {
-    //CHANGE
     String(&'a String),
     Number(f64),
 }
@@ -153,7 +149,6 @@ fn analyze_expr<'a>(
 
         other_terms.push((term.0, analysed_term));
     }
-    //CHANGE
     Ok(AnalyzedExpr {
         type_info: first_term.type_info,
         expr: (first_term, other_terms),
@@ -200,7 +195,6 @@ fn analyze_factor<'a>(
         },
         ParsedFactor::Identifier(name) => {
             let (handle, type_info) = variables.find_symbol(name)?;
-            //CHANGE
             Ok(AnalyzedFactor::get_identifier(handle, type_info))
         }
         ParsedFactor::SubExpression(expr) => {

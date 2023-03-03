@@ -1,10 +1,9 @@
 use std::{
     fmt::Display,
     ops::{Add, Div, Mul, Sub},
-    str::FromStr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     String(String),
     Number(f64),
@@ -15,8 +14,10 @@ impl Add for Value {
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (Value::Number(a), Value::Number(b)) => Value::Number(a + b),
-            (Value::String(a), Value::String(b)) => Value::String(a + &b),
-
+            (Value::String(a), Value::String(b)) => {
+                let res = a + &b;
+                Value::String(res)
+            }
             (_, _) => panic!("Invalid Addition"),
         }
     }
@@ -51,8 +52,8 @@ impl Div for Value {
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Number(val) => write!(f, "number: {}", val),
-            Self::String(val) => write!(f, "string: {}", val),
+            Self::Number(val) => write!(f, "{}", val),
+            Self::String(val) => write!(f, "{}", val),
         }
     }
 }
