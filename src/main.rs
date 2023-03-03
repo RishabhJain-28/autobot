@@ -63,11 +63,11 @@ fn proceess_file(_current_path: &str, source_path: &str) {
             parsed_program = syntax_tree;
         }
         Err(err) => {
-            eprintln!("Invalid code in '{}': {:?}", source_path.display(), err);
+            eprintln!("Invalid code in '{}': \n\n{:?}", source_path.display(), err);
             return;
         }
     }
-    eprintln!("parsed program {:?}", parsed_program);
+    // eprintln!("parsed program {:?}", parsed_program);
     // return;
     //
 
@@ -78,11 +78,11 @@ fn proceess_file(_current_path: &str, source_path: &str) {
             analyzed_program = analyzed_tree;
         }
         Err(err) => {
-            eprintln!("Invalid code in '{}': {}", source_path.display(), err);
+            eprintln!("Invalid code in '{}': \n\n{:?}", source_path.display(), err);
             return;
         }
     }
-    eprintln!("analysed program {:?}", parsed_program);
+    // eprintln!("analysed program {:?}", parsed_program);
 
     // return;
     // let target_dir = source_path
@@ -131,35 +131,34 @@ fn run_interpreter() {
             input => parse_input(&mut variables, input),
         }
     }
-}
-
-fn parse_input(variables: &mut SymbolTable, input: &str) {
-    let parsed_program;
-    match parser::parse_program(&input) {
-        Ok((rest, syntax_tree)) => {
-            let trimmed_rest = rest.trim();
-            if trimmed_rest.len() > 0 {
-                eprintln!("Unparsed input: `{}`.", trimmed_rest);
+    fn parse_input(variables: &mut SymbolTable, input: &str) {
+        let parsed_program;
+        match parser::parse_program(&input) {
+            Ok((rest, syntax_tree)) => {
+                let trimmed_rest = rest.trim();
+                if trimmed_rest.len() > 0 {
+                    eprintln!("Unparsed input: `{}`.", trimmed_rest);
+                }
+                parsed_program = syntax_tree;
+                // eprintln!("{:?}", parsed_program);
+                execute_parsed_program(variables, parsed_program);
             }
-            parsed_program = syntax_tree;
-            // eprintln!("{:?}", parsed_program);
-            execute_parsed_program(variables, parsed_program);
-        }
-        Err(err) => {
-            eprintln!("Error: {:?}", err);
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+            }
         }
     }
-}
-fn execute_parsed_program(variables: &mut SymbolTable, parsed_program: ParsedProgram) {
-    let analyzed_program;
-    match analyzer::analyze_program(variables, &parsed_program) {
-        Ok(analyzed_tree) => {
-            analyzed_program = analyzed_tree;
-            // executor::execute_program(&mut variables, &analyzed_program)
-            eprintln!("{:?}", analyzed_program);
-        }
-        Err(err) => {
-            eprintln!("Error: {:?}", err);
+    fn execute_parsed_program(variables: &mut SymbolTable, parsed_program: ParsedProgram) {
+        let analyzed_program;
+        match analyzer::analyze_program(variables, &parsed_program) {
+            Ok(analyzed_tree) => {
+                analyzed_program = analyzed_tree;
+                // executor::execute_program(&mut variables, &analyzed_program)
+                eprintln!("{:?}", analyzed_program);
+            }
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+            }
         }
     }
 }
