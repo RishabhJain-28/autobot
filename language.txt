@@ -1,10 +1,12 @@
-
 <program> ::= "" | <program> <statement>
-<statement> ::= @ <identifier> <type> | > <identifier> | < <expr> | <identifier> := <expr>
-
+<statement> ::=  @ <identifier> <type> | > <identifier> | < <expr> | <function> | <identifier> := <expr>  
 <type>::= string | number
-<expr> ::= <term> | <expr> + <term> | <expr> - <term>
 
+<function> ::= open <expr>  | write_file <expr> <expr>
+
+// <args> ::= <expr> | <args> <expr>
+  
+<expr> ::= <term> | <expr> + <term> | <expr> - <term>
 <term> ::= <factor> | <term> \* <factor> | <term> / <factor>
 <factor> ::= <identifier> | <literal> | ( <expr> )
 

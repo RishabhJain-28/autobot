@@ -1,5 +1,6 @@
 // CFG parser
 mod string_parser;
+
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while},
@@ -21,7 +22,16 @@ pub enum ParsedStatement<'a> {
     Declaration(&'a str, Type),
     InputOperation(&'a str),
     OutputOperation(ParsedExpr<'a>),
+    Function(ParsedKeyword, Vec<ParsedExpr<'a>>),
     Assignment(&'a str, ParsedExpr<'a>),
+}
+
+// pub type ParsedFunction<'a> = (ParsedKeyword, Vec<ParsedExpr<'a>>);
+
+#[derive(Debug, PartialEq)]
+pub enum ParsedKeyword {
+    Open,
+    WriteFile,
 }
 
 pub type ParsedExpr<'a> = (ParsedTerm<'a>, Vec<(ExprOperator, ParsedTerm<'a>)>);
@@ -59,9 +69,21 @@ pub fn parse_program(input: &str) -> IResult<&str, ParsedProgram> {
             parse_decleration,
             parse_input_statement,
             parse_output_statement,
+            parse_function,
             parse_assignment,
         )),
     ))(input)
+}
+
+// nom::na(parse_function, tag("open"));
+fn parse_function(input: &str) -> IResult<&str, ParsedStatement> {
+    //TODO : shift to parse keywords
+    tuple((tag("open"), parse_expression))(input).map(|(input, output)| {
+        (
+            input,
+            ParsedStatement::Function(ParsedKeyword::Open, vec![output.1]),
+        )
+    })
 }
 
 fn parse_decleration(input: &str) -> IResult<&str, ParsedStatement> {
