@@ -4,7 +4,7 @@ use crate::{
         AnalyzedStatement, AnalyzedTerm,
     },
     parser::{ExprOperator, TermOperator},
-    runtime::value::Value,
+    runtime::{keyword::Keyword, value::Value},
     symbol_table::SymbolTable,
 };
 
@@ -50,6 +50,13 @@ fn execute_statement<'a>(
     statement: &'a AnalyzedStatement,
 ) -> Result<(), String> {
     match statement {
+        AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
+            Keyword::Open => {
+                //TODO: finish this keyword function
+                println!("Opening : {}", evaluate_expr(variables, &vec_expr[0]));
+                Ok(())
+            }
+        },
         AnalyzedStatement::Declaration(_) => Ok(()),
         AnalyzedStatement::Assignment(handle, expr) => {
             let result = evaluate_expr(variables, expr);

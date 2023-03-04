@@ -13,7 +13,7 @@ use nom::{
 };
 use string_parser::parse_string;
 
-use crate::runtime::types::Type;
+use crate::runtime::{keyword::Keyword, types::Type};
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
 
@@ -22,17 +22,17 @@ pub enum ParsedStatement<'a> {
     Declaration(&'a str, Type),
     InputOperation(&'a str),
     OutputOperation(ParsedExpr<'a>),
-    Function(ParsedKeyword, Vec<ParsedExpr<'a>>),
+    Function(Keyword, Vec<ParsedExpr<'a>>),
     Assignment(&'a str, ParsedExpr<'a>),
 }
 
 // pub type ParsedFunction<'a> = (ParsedKeyword, Vec<ParsedExpr<'a>>);
 
-#[derive(Debug, PartialEq)]
-pub enum ParsedKeyword {
-    Open,
-    WriteFile,
-}
+// #[derive(Debug, PartialEq)]
+// pub enum ParsedKeyword {
+//     Open,
+//     WriteFile,
+// }
 
 pub type ParsedExpr<'a> = (ParsedTerm<'a>, Vec<(ExprOperator, ParsedTerm<'a>)>);
 
@@ -81,7 +81,7 @@ fn parse_function(input: &str) -> IResult<&str, ParsedStatement> {
     tuple((tag("open"), parse_expression))(input).map(|(input, output)| {
         (
             input,
-            ParsedStatement::Function(ParsedKeyword::Open, vec![output.1]),
+            ParsedStatement::Function(Keyword::Open, vec![output.1]),
         )
     })
 }

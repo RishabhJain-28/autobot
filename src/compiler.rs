@@ -60,6 +60,9 @@ fn translate_to_rust_statement(
     analyzed_statement: &AnalyzedStatement,
 ) -> String {
     match analyzed_statement {
+        AnalyzedStatement::Function(keyword, vec_expr) => {
+            unimplemented!()
+        }
         AnalyzedStatement::Assignment(handle, expr) => format!(
             "_{} = {}",
             variables.get_name(*handle),

@@ -1,6 +1,13 @@
-use crate::{parser::ParsedStatement, runtime::types::Type, symbol_table::SymbolTable};
+use crate::{
+    parser::ParsedStatement,
+    runtime::{keyword::Keyword, types::Type},
+    symbol_table::SymbolTable,
+};
 
-use super::expr::{analyze_expr, AnalyzedExpr};
+use super::{
+    error::AnalyzerError,
+    expr::{analyze_expr, AnalyzedExpr},
+};
 
 #[derive(Debug)]
 pub enum AnalyzedStatement<'a> {
@@ -8,13 +15,39 @@ pub enum AnalyzedStatement<'a> {
     InputOperation(usize, Type),
     OutputOperation(AnalyzedExpr<'a>),
     Assignment(usize, AnalyzedExpr<'a>),
+    Function(Keyword, Vec<AnalyzedExpr<'a>>),
 }
 
+//TODO: return AnalyserError instead of strings
 pub fn analyze_statement<'a>(
     variables: &mut SymbolTable,
     parsed_statement: &'a ParsedStatement,
 ) -> Result<AnalyzedStatement<'a>, String> {
     match parsed_statement {
+        ParsedStatement::Function(keyword, vec_expr) => {
+            let analyzed_vec_expr: Vec<AnalyzedExpr<'a>> = match *keyword {
+                // TODO: remove hardcoded number of args, keyword should contain this info
+                Keyword::Open => {
+                    if vec_expr.len() > 1 {
+                        return Err(format!(
+                            "[illegal statement]:{:?}\n{}",
+                            parsed_statement,
+                            AnalyzerError::unexpected_number_of_args(1, vec_expr.len() as i32)
+                        ));
+                    }
+                    let expr = analyze_expr(variables, &vec_expr[0])?;
+                    if expr.type_info != Type::String {
+                        return Err(format!(
+                            "[illegal statement]:{:?}\n{}",
+                            parsed_statement,
+                            AnalyzerError::mismatched_type(Type::String, expr.type_info)
+                        ));
+                    }
+                    vec![expr]
+                }
+            };
+            Ok(AnalyzedStatement::Function(*keyword, analyzed_vec_expr))
+        }
         ParsedStatement::Assignment(identifier, parsed_expr) => {
             let (handle, identifier_type_info) = variables.find_symbol(identifier)?;
             let AnalyzedExpr {
@@ -24,8 +57,9 @@ pub fn analyze_statement<'a>(
 
             if identifier_type_info != expected_statement_type {
                 return Err(format!(
-                    "[illegal statement] : {:?} \n Mismatched types=> Expected {:?}, found {:?}",
-                    parsed_statement, expected_statement_type, identifier_type_info
+                    "[illegal statement]:{:?}\n{}",
+                    parsed_statement,
+                    AnalyzerError::mismatched_type(expected_statement_type, identifier_type_info)
                 ));
             };
 

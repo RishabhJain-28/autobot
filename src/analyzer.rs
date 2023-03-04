@@ -1,4 +1,5 @@
 //CSG : context sensitive grammer
+mod error;
 mod expr;
 mod factor;
 mod statement;
