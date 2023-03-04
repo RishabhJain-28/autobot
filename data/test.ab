@@ -1,0 +1,11 @@
+@a number
+@b number 
+>a 
+>b 
+<a+b
+@c string 
+c := ("Hello world") 
+<c
+<"Enter a string" 
+>c
+<c

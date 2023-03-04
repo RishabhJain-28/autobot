@@ -2,8 +2,8 @@ use std::{ffi::OsStr, path::Path};
 
 use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
 
-// mod compiler;
 mod analyzer;
+mod compiler;
 mod executor;
 mod parser;
 mod runtime;
@@ -16,10 +16,10 @@ fn main() {
     if source_path.is_none() {
         return run_interpreter();
     }
-    proceess_file(&current_path.unwrap(), &source_path.unwrap());
+    compile_to_rust(&current_path.unwrap(), &source_path.unwrap());
 }
 
-fn proceess_file(_current_path: &str, source_path: &str) {
+fn compile_to_rust(_current_path: &str, source_path: &str) {
     const CALC_PREFIX: &str = "ab";
     const OUTPUT_DIR: &str = "output";
     const OUTPUT_FILE_NAME: &str = "out.rs";
@@ -47,63 +47,60 @@ fn proceess_file(_current_path: &str, source_path: &str) {
 
     let source_code = source_code.unwrap();
 
-    let parsed_program;
-    match parser::parse_program(&source_code) {
-        Ok((rest, syntax_tree)) => {
-            let trimmed_rest = rest.trim();
-            if trimmed_rest.len() > 0 {
-                eprintln!(
-                    "Invalid remaining code in '{}': {}",
-                    source_path.display(),
-                    trimmed_rest
-                );
-                return;
-            }
-            parsed_program = syntax_tree;
-        }
-        Err(err) => {
-            eprintln!("Invalid code in '{}': \n\n{:?}", source_path.display(), err);
-            return;
-        }
-    }
+    let parsed_program = parser::parse_program(&source_code);
 
-    let analyzed_program;
+    if parsed_program.is_err() {
+        eprintln!(
+            "Invalid code in '{}': \n\nErr: {:?}",
+            source_path.display(),
+            parsed_program.unwrap_err()
+        );
+        return;
+    }
+    let (rest, syntax_tree) = parsed_program.unwrap();
+    let trimmed_rest = rest.trim();
+    if trimmed_rest.len() > 0 {
+        eprintln!(
+            "Invalid code in '{}': \n\nErr: {}",
+            source_path.display(),
+            trimmed_rest
+        );
+        return;
+    }
     let mut variables = symbol_table::SymbolTable::new();
-    match analyzer::analyze_program(&mut variables, &parsed_program) {
-        Ok(analyzed_tree) => {
-            analyzed_program = analyzed_tree;
-        }
-        Err(err) => {
-            eprintln!("Invalid code in '{}': \n\n{:?}", source_path.display(), err);
-            return;
-        }
+    let analyzed_program = analyzer::analyze_program(&mut variables, &syntax_tree);
+    if analyzed_program.is_err() {
+        eprintln!(
+            "Invalid code in '{}': \n\nErr: {}",
+            source_path.display(),
+            analyzed_program.unwrap_err()
+        );
+        return;
     }
-    // eprintln!("analysed program {:?}", parsed_program);
+    let analyzed_program = analyzed_program.unwrap();
+    let target_dir = source_path
+        .parent()
+        .unwrap_or(Path::new("/"))
+        .join(OUTPUT_DIR);
+    std::fs::create_dir_all(&target_dir).expect("Cannot create output directory");
 
-    // return;
-    // let target_dir = source_path
-    //     .parent()
-    //     .unwrap_or(Path::new("/"))
-    //     .join(OUTPUT_DIR);
-    // std::fs::create_dir_all(&target_dir).expect("Cannot create output directory");
+    let output_file_path = target_dir.join(OUTPUT_FILE_NAME);
 
-    // let output_file_path = target_dir.join(OUTPUT_FILE_NAME);
-
-    // match std::fs::write(
-    //     &output_file_path,
-    //     compiler::translate_to_rust_program(&variables, &analyzed_program),
-    // ) {
-    //     Ok(_) => eprintln!(
-    //         "Compiled {} to {}.",
-    //         source_path.display(),
-    //         output_file_path.display()
-    //     ),
-    //     Err(err) => eprintln!(
-    //         "Failed to write to file {}: ({})",
-    //         output_file_path.display(),
-    //         err
-    //     ),
-    // }
+    match std::fs::write(
+        &output_file_path,
+        compiler::translate_to_rust_program(&variables, &analyzed_program),
+    ) {
+        Ok(_) => eprintln!(
+            "Compiled {} to {}.",
+            source_path.display(),
+            output_file_path.display()
+        ),
+        Err(err) => eprintln!(
+            "Failed to write to file {}: ({})",
+            output_file_path.display(),
+            err
+        ),
+    }
 }
 
 fn run_interpreter() {
@@ -147,7 +144,7 @@ fn run_interpreter() {
                 execute_parsed_program(variables, syntax_tree);
             }
             Err(err) => {
-                eprintln!("Error: {:?}", err);
+                eprintln!("Error: {}", err);
             }
         }
     }
@@ -157,12 +154,12 @@ fn run_interpreter() {
                 match executor::execute_program(variables, &analyzed_tree) {
                     Ok(_) => (),
                     Err(err) => {
-                        eprintln!("Error: {:?}", err);
+                        eprintln!("Error: {}", err);
                     }
                 };
             }
             Err(err) => {
-                eprintln!("Error: {:?}", err);
+                eprintln!("Error: {}", err);
             }
         }
     }

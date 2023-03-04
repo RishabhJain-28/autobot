@@ -149,10 +149,13 @@ fn parse_literal(input: &str) -> IResult<&str, ParsedLiteral> {
 }
 
 fn parse_subexpr<'a>(input: &str) -> IResult<&str, ParsedExpr> {
-    delimited(
-        preceded(skip_spaces, char('(')),
-        parse_expression,
-        preceded(skip_spaces, char('(')),
+    preceded(
+        skip_spaces,
+        delimited(
+            char('('),
+            preceded(skip_spaces, parse_expression),
+            preceded(skip_spaces, char(')')),
+        ),
     )(input)
 }
 
@@ -164,7 +167,7 @@ fn parse_type(input: &str) -> IResult<&str, Type> {
 }
 
 fn parse_identifier(input: &str) -> IResult<&str, &str> {
-    // TODO: remove keywords like string, number, etc
+    // TODO: remove keywords like string, number, (), etc
     alpha1(input)
 }
 
@@ -180,73 +183,73 @@ fn skip_spaces(input: &str) -> IResult<&str, &str> {
 //     use nom::error::ErrorKind;
 //     use nom::error_position;
 
-//     #[test]
-//     fn valid_decleration() {
-//         assert_eq!(
-//             parse_decleration("@a number"),
-//             Ok(("", ParsedStatement::Declaration("a", Types::Number)))
-//         );
-//         assert_eq!(
-//             parse_decleration("@a string"),
-//             Ok(("", ParsedStatement::Declaration("a", Types::String)))
-//         );
-//     }
-//     #[test]
-//     fn invalid_decleration() {
-//         assert_eq!(
-//             parse_decleration("@a"),
-//             Err(nom::Err::Error(error_position!("", ErrorKind::Tag)))
-//         );
-//         assert_eq!(
-//             parse_decleration("@a invalid_type"),
-//             Err(nom::Err::Error(error_position!(
-//                 "invalid_type",
-//                 ErrorKind::Tag
-//             )))
-//         );
-//     }
-//     #[test]
-//     fn valid_assignment() {
-//         assert_eq!(
-//             parse_assignment("a:=\"This is a string\""),
-//             Ok((
-//                 "",
-//                 ParsedStatement::Assignment(
-//                     "a",
+// #[test]
+// fn valid_decleration() {
+//     assert_eq!(
+//         parse_decleration("@a number"),
+//         Ok(("", ParsedStatement::Declaration("a", Types::Number)))
+//     );
+//     assert_eq!(
+//         parse_decleration("@a string"),
+//         Ok(("", ParsedStatement::Declaration("a", Types::String)))
+//     );
+// }
+// #[test]
+// fn invalid_decleration() {
+//     assert_eq!(
+//         parse_decleration("@a"),
+//         Err(nom::Err::Error(error_position!("", ErrorKind::Tag)))
+//     );
+//     assert_eq!(
+//         parse_decleration("@a invalid_type"),
+//         Err(nom::Err::Error(error_position!(
+//             "invalid_type",
+//             ErrorKind::Tag
+//         )))
+//     );
+// }
+// #[test]
+// fn valid_assignment() {
+//     assert_eq!(
+//         parse_assignment("a:=\"This is a string\""),
+//         Ok((
+//             "",
+//             ParsedStatement::Assignment(
+//                 "a",
+//                 (
 //                     (
-//                         (
-//                             ParsedFactor::Literal(ParsedLiteral::String(String::from(
-//                                 "This is a string"
-//                             ))),
-//                             Vec::new()
-//                         ),
+//                         ParsedFactor::Literal(ParsedLiteral::String(String::from(
+//                             "This is a string"
+//                         ))),
 //                         Vec::new()
-//                     )
+//                     ),
+//                     Vec::new()
 //                 )
-//             ))
-//         );
-//         assert_eq!(
-//             parse_assignment("a:=2"),
-//             Ok((
-//                 "",
-//                 ParsedStatement::Assignment(
-//                     "a",
-//                     (
-//                         (ParsedFactor::Literal(ParsedLiteral::Number(2.)), Vec::new()),
-//                         Vec::new()
-//                     )
+//             )
+//         ))
+//     );
+//     assert_eq!(
+//         parse_assignment("a:=2"),
+//         Ok((
+//             "",
+//             ParsedStatement::Assignment(
+//                 "a",
+//                 (
+//                     (ParsedFactor::Literal(ParsedLiteral::Number(2.)), Vec::new()),
+//                     Vec::new()
 //                 )
-//             ))
-//         );
-//     }
+//             )
+//         ))
+//     );
+// }
 
-//     #[test]
-//     fn invalid_assigment() {
-//         match parse_assignment("a:=\"sdaasd") {
-//             Ok(_) => {
-//                 panic!("Invalid assignemnt: missing semicolon\n")
-//             }
-//             Err(_) => (),
+// #[test]
+// fn invalid_assigment() {
+//     match parse_assignment("a:=\"sdaasd") {
+//         Ok(_) => {
+//             panic!("Invalid assignemnt: missing semicolon\n")
 //         }
+//         Err(_) => (),
 //     }
+// }
 // }

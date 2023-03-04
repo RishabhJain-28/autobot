@@ -1,0 +1,17 @@
+
+<program> ::= "" | <program> <statement>
+<statement> ::= @ <identifier> <type> | > <identifier> | < <expr> | <identifier> := <expr>
+
+<type>::= string | number
+<expr> ::= <term> | <expr> + <term> | <expr> - <term>
+
+<term> ::= <factor> | <term> \* <factor> | <term> / <factor>
+<factor> ::= <identifier> | <literal> | ( <expr> )
+
+<literal> ::= ”<string>” | <double>
+
+<string>::= <letter> | <string> <letter>
+<identifier> := <letter> | <identifier> <letter>
+
+primitives : <letter> , <double>
+    

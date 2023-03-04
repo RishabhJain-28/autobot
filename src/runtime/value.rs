@@ -3,6 +3,8 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
+use super::types::Type;
+
 #[derive(Debug, Clone)]
 pub enum Value {
     String(String),
@@ -54,6 +56,14 @@ impl Display for Value {
         match self {
             Self::Number(val) => write!(f, "{}", val),
             Self::String(val) => write!(f, "{}", val),
+        }
+    }
+}
+impl<'a> Into<Type> for Value {
+    fn into(self) -> Type {
+        match self {
+            Self::Number(_) => Type::Number,
+            Self::String(_) => Type::String,
         }
     }
 }

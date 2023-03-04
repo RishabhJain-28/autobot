@@ -65,13 +65,11 @@ impl SymbolTable {
     pub fn iter(&self) -> std::slice::Iter<SymbolEntry> {
         self.entities.iter()
     }
-}
 
-impl<'a> Into<Type> for Value {
-    fn into(self) -> Type {
-        match self {
-            Self::Number(_) => Type::Number,
-            Self::String(_) => Type::String,
-        }
+    pub fn get_name(&self, handle: usize) -> &String {
+        &self.entities[handle].0
+    }
+    pub fn get_type(&self, handle: usize) -> Type {
+        Value::clone(&self.entities[handle].1).into()
     }
 }

@@ -75,6 +75,15 @@ pub enum AnalyzedLiteral<'a> {
     Number(f64),
 }
 
+impl<'a> ToString for AnalyzedLiteral<'a> {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Number(num) => num.to_string() + "f64",
+            Self::String(string) => format!("String::from(\"{}\")", string),
+        }
+    }
+}
+
 pub fn analyze_program<'a>(
     variables: &mut SymbolTable,
     parsed_program: &'a ParsedProgram,
