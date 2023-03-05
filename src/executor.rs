@@ -3,8 +3,12 @@ use crate::{
         AnalyzedExpr, AnalyzedFactor, AnalyzedFactorEnum, AnalyzedLiteral, AnalyzedProgram,
         AnalyzedStatement, AnalyzedTerm,
     },
-    parser::{ExprOperator, TermOperator},
-    runtime::{keyword::Keywords, value::Value},
+    parser::TermOperator,
+    runtime::{
+        keyword::{Keyword, Keywords},
+        operator::{ExprOperator, Operator},
+        value::Value,
+    },
     symbol_table::SymbolTable,
 };
 
@@ -38,8 +42,14 @@ fn evaluate_expr<'a>(variables: &'a SymbolTable, expr: &'a AnalyzedExpr) -> Valu
 
     for term in &expr.expr.1 {
         match term.0 {
-            ExprOperator::Add => result = result + evaluate_term(variables, &term.1),
-            ExprOperator::Subtract => result = result - evaluate_term(variables, &term.1),
+            ExprOperator::Add(add) => {
+                result = add.execute_op([result, evaluate_term(variables, &term.1)])
+            }
+            ExprOperator::Subtract(sub) => {
+                result = sub.execute_op([result, evaluate_term(variables, &term.1)])
+            }
+            // ExprOperator::Add => result = result + evaluate_term(variables, &term.1),
+            // ExprOperator::Subtract => result = result - evaluate_term(variables, &term.1),
         }
     }
     result
@@ -53,7 +63,7 @@ fn execute_statement<'a>(
         AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
             Keywords::Open(open) => {
                 let path = evaluate_expr(variables, &vec_expr[0]);
-                open.execute(&path.to_string())
+                open.execute_keyword(&path.to_string())
             }
         },
         AnalyzedStatement::Declaration(_) => Ok(()),

@@ -9,23 +9,33 @@ impl Keywords {
     }
 }
 
+pub trait Keyword<Args> {
+    fn execute_keyword(&self, _: Args) -> Result<(), String> {
+        unimplemented!()
+    }
+    fn compile_keyword(&self, _: Args) -> String {
+        unimplemented!()
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct OpenKeyword;
 impl OpenKeyword {
     const NAME: &str = "OpenKeyword";
-
-    pub fn new() -> Self {
-        Self
-    }
-    pub fn execute(self, file_path: &str) -> Result<(), String> {
-        println!("Opening : {:?}", &file_path);
-        match open::that(&file_path) {
-            Err(err) => Err(format!("Failed to open file '{}'\n\n {}", file_path, err)),
+    // pub fn new() -> Self {
+    //     Self
+    // }
+}
+impl Keyword<&str> for OpenKeyword {
+    fn execute_keyword(&self, path_arg: &str) -> Result<(), String> {
+        println!("Opening : {:?}", &path_arg);
+        match open::that(&path_arg) {
+            Err(err) => Err(format!("Failed to open file '{}'\n\n {}", path_arg, err)),
             Ok(_) => Ok(()),
         }
     }
 
-    pub fn compile(self, path_arg: &str) -> String {
+    fn compile_keyword(&self, path_arg: &str) -> String {
         format!("{}::new().execute(&{})", Self::NAME, path_arg)
     }
 }

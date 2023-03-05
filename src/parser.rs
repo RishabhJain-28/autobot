@@ -13,10 +13,7 @@ use nom::{
 };
 use unicode_string_parser::parse_string;
 
-use crate::runtime::{
-    keyword::{Keywords, OpenKeyword},
-    types::Type,
-};
+use crate::runtime::{keyword::Keywords, operator::ExprOperator, types::Type};
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
 
@@ -39,11 +36,6 @@ pub enum ParsedStatement<'a> {
 
 pub type ParsedExpr<'a> = (ParsedTerm<'a>, Vec<(ExprOperator, ParsedTerm<'a>)>);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ExprOperator {
-    Add,
-    Subtract,
-}
 pub type ParsedTerm<'a> = (ParsedFactor<'a>, Vec<(TermOperator, ParsedFactor<'a>)>);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -127,8 +119,8 @@ fn parse_expression(input: &str) -> IResult<&str, ParsedExpr> {
             preceded(
                 skip_spaces,
                 alt((
-                    map(char('+'), |_| ExprOperator::Add),
-                    map(char('-'), |_| ExprOperator::Subtract),
+                    map(char('+'), |_| ExprOperator::add()),
+                    map(char('-'), |_| ExprOperator::subtract()),
                 )),
             ),
             parse_term,

@@ -1,6 +1,6 @@
 use crate::{
-    parser::{ExprOperator, ParsedExpr},
-    runtime::types::Type,
+    parser::ParsedExpr,
+    runtime::{operator::ExprOperator, types::Type},
     symbol_table::SymbolTable,
 };
 

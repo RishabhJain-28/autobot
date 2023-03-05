@@ -3,8 +3,12 @@ use crate::{
         AnalyzedExpr, AnalyzedFactor, AnalyzedFactorEnum, AnalyzedProgram, AnalyzedStatement,
         AnalyzedTerm,
     },
-    parser::{ExprOperator, TermOperator},
-    runtime::{keyword::Keywords, types::Type},
+    parser::TermOperator,
+    runtime::{
+        keyword::{Keyword, Keywords},
+        operator::{ExprOperator, Operator},
+        types::Type,
+    },
     symbol_table::SymbolTable,
 };
 fn translate_to_rust_factor(variables: &SymbolTable, analyzed_factor: &AnalyzedFactor) -> String {
@@ -42,14 +46,16 @@ fn translate_to_rust_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedExpr)
     let mut result = translate_to_rust_term(variables, &analyzed_expr.expr.0);
     for term in &analyzed_expr.expr.1 {
         match term.0 {
-            ExprOperator::Add => {
-                //TODO : change for strings
-                result += " + ";
-                result += &translate_to_rust_term(variables, &term.1);
+            ExprOperator::Add(add) => {
+                result += &add.compile_op([&result, &translate_to_rust_term(variables, &term.1)]);
+                // result += " + ";
+                // result += ;
             }
-            ExprOperator::Subtract => {
-                result += " - ";
-                result += &translate_to_rust_term(variables, &term.1);
+            ExprOperator::Subtract(sub) => {
+                result += &sub.compile_op([&result, &translate_to_rust_term(variables, &term.1)]);
+
+                // result += " - ";
+                // result += &translate_to_rust_term(variables, &term.1);
             }
         }
     }
@@ -63,7 +69,7 @@ fn translate_to_rust_statement(
         AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
             Keywords::Open(open) => {
                 let path_arg = translate_to_rust_expr(variables, &vec_expr[0]);
-                open.compile(&path_arg)
+                open.compile_keyword(&path_arg)
             }
         },
         AnalyzedStatement::Assignment(handle, expr) => format!(
