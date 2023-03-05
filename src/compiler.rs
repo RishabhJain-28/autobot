@@ -4,7 +4,7 @@ use crate::{
         AnalyzedTerm,
     },
     parser::{ExprOperator, TermOperator},
-    runtime::types::Type,
+    runtime::{keyword::Keywords, types::Type},
     symbol_table::SymbolTable,
 };
 fn translate_to_rust_factor(variables: &SymbolTable, analyzed_factor: &AnalyzedFactor) -> String {
@@ -60,9 +60,12 @@ fn translate_to_rust_statement(
     analyzed_statement: &AnalyzedStatement,
 ) -> String {
     match analyzed_statement {
-        AnalyzedStatement::Function(keyword, vec_expr) => {
-            unimplemented!("AnalyzedStatement::Function")
-        }
+        AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
+            Keywords::Open(open) => {
+                let path_arg = translate_to_rust_expr(variables, &vec_expr[0]);
+                open.compile(&path_arg)
+            }
+        },
         AnalyzedStatement::Assignment(handle, expr) => format!(
             "_{} = {}",
             variables.get_name(*handle),

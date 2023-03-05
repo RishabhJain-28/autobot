@@ -8,6 +8,7 @@ High level scripting language designed for hasle free system automation.
 - `a := some_expr` -> set value of an identifier
 - `>a` -> get value and store it in an identifier
 - `< some_expr` -> output an expression or a iddentifier
+- `open <string> ` -> open a file or a url
 
 ### Data Types
 

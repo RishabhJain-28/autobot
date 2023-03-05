@@ -1,6 +1,6 @@
 use crate::{
     parser::ParsedStatement,
-    runtime::{keyword::Keyword, types::Type},
+    runtime::{keyword::Keywords, types::Type},
     symbol_table::SymbolTable,
 };
 
@@ -15,7 +15,7 @@ pub enum AnalyzedStatement<'a> {
     InputOperation(usize, Type),
     OutputOperation(AnalyzedExpr<'a>),
     Assignment(usize, AnalyzedExpr<'a>),
-    Function(Keyword, Vec<AnalyzedExpr<'a>>),
+    Function(Keywords, Vec<AnalyzedExpr<'a>>),
 }
 
 //TODO: return AnalyserError instead of strings
@@ -27,7 +27,7 @@ pub fn analyze_statement<'a>(
         ParsedStatement::Function(keyword, vec_expr) => {
             let analyzed_vec_expr: Vec<AnalyzedExpr<'a>> = match *keyword {
                 // TODO: remove hardcoded number of args, keyword should contain this info
-                Keyword::Open => {
+                Keywords::Open(_) => {
                     if vec_expr.len() > 1 {
                         return Err(format!(
                             "[illegal statement]:{:?}\n{}",
