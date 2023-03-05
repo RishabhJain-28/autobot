@@ -47,12 +47,24 @@ fn translate_to_rust_expr(variables: &SymbolTable, analyzed_expr: &AnalyzedExpr)
     for term in &analyzed_expr.expr.1 {
         match term.0 {
             ExprOperator::Add(add) => {
-                result += &add.compile_op([&result, &translate_to_rust_term(variables, &term.1)]);
+                result = add.compile_op([
+                    (&result, analyzed_expr.type_info),
+                    (
+                        &translate_to_rust_term(variables, &term.1),
+                        term.1.type_info,
+                    ),
+                ]);
                 // result += " + ";
                 // result += ;
             }
             ExprOperator::Subtract(sub) => {
-                result += &sub.compile_op([&result, &translate_to_rust_term(variables, &term.1)]);
+                result = sub.compile_op([
+                    (&result, analyzed_expr.type_info),
+                    (
+                        &translate_to_rust_term(variables, &term.1),
+                        term.1.type_info,
+                    ),
+                ]);
 
                 // result += " - ";
                 // result += &translate_to_rust_term(variables, &term.1);

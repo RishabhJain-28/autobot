@@ -1,4 +1,4 @@
-use crate::runtime::value::Value;
+use super::super::{types::Type, value::Value};
 
 use super::{Operator, BINARY_OP};
 
@@ -28,9 +28,23 @@ impl Operator<{ BINARY_OP }> for AddOp {
         let [a, b] = args;
         a + b
     }
-    fn compile_op(&self, args: [&String; BINARY_OP]) -> String {
+    fn compile_op(&self, args: [(&String, Type); BINARY_OP]) -> String {
         let [a, b] = args;
-        a.to_owned() + " + " + b
+        let mut res = String::from(a.0);
+        match (a.1, b.1) {
+            (Type::Number, Type::Number) => {
+                res += " + ";
+                res += b.0;
+            }
+            (Type::String, Type::String) => {
+                res += " + &";
+                res += b.0;
+            }
+            (_, _) => panic!("Invalid Addition"),
+        }
+
+        println!("{}", res);
+        res
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -41,8 +55,16 @@ impl Operator<{ BINARY_OP }> for SubOp {
         let [a, b] = args;
         a - b
     }
-    fn compile_op(&self, args: [&String; BINARY_OP]) -> String {
+    fn compile_op(&self, args: [(&String, Type); BINARY_OP]) -> String {
         let [a, b] = args;
-        a.to_owned() + " - " + b
+        let mut res = String::from(a.0);
+        match (a.1, b.1) {
+            (Type::Number, Type::Number) => {
+                res += " + ";
+                res += b.0;
+            }
+            (_, _) => panic!("Invalid Substraction"),
+        }
+        res
     }
 }
