@@ -1,5 +1,5 @@
 // CFG parser
-mod string_parser;
+mod unicode_string_parser;
 
 use nom::{
     branch::alt,
@@ -11,7 +11,7 @@ use nom::{
     sequence::{delimited, preceded, tuple},
     IResult,
 };
-use string_parser::parse_string;
+use unicode_string_parser::parse_string;
 
 use crate::runtime::{keyword::Keyword, types::Type};
 
@@ -75,7 +75,6 @@ pub fn parse_program(input: &str) -> IResult<&str, ParsedProgram> {
     ))(input)
 }
 
-// nom::na(parse_function, tag("open"));
 fn parse_function(input: &str) -> IResult<&str, ParsedStatement> {
     //TODO : shift to parse keywords
     tuple((tag("open"), parse_expression))(input).map(|(input, output)| {
@@ -165,7 +164,11 @@ fn parse_factor(input: &str) -> IResult<&str, ParsedFactor> {
 
 fn parse_literal(input: &str) -> IResult<&str, ParsedLiteral> {
     alt((
-        map(parse_string, |v| ParsedLiteral::String(v)),
+        map(parse_string, |v| {
+            //TODO : removed // parsing
+            println!("parsed string: {}", v);
+            return ParsedLiteral::String(v);
+        }),
         map(double, ParsedLiteral::Number),
     ))(input)
 }

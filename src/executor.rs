@@ -52,9 +52,8 @@ fn execute_statement<'a>(
     match statement {
         AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
             Keyword::Open => {
-                //TODO: finish this keyword function
-                println!("Opening : {}", evaluate_expr(variables, &vec_expr[0]));
-                Ok(())
+                let path = evaluate_expr(variables, &vec_expr[0]);
+                Keyword::open(&path.to_string())
             }
         },
         AnalyzedStatement::Declaration(_) => Ok(()),

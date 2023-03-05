@@ -6,6 +6,6 @@
 @c string 
 c := ("Hello world") 
 <c
-<"Enter a string" 
+<"Enter a path" 
 >c
-<c
+open c

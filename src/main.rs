@@ -22,8 +22,7 @@ fn main() {
 fn compile_to_rust(_current_path: &str, source_path: &str) {
     const CALC_PREFIX: &str = "ab";
     const OUTPUT_DIR: &str = "output";
-    const OUTPUT_FILE_NAME: &str = "out.rs";
-
+    const OUTPUT_FILE_NAME: &str = "main.rs";
     let source_path = Path::new(source_path);
     let source_ext = source_path.extension().unwrap_or(OsStr::new(CALC_PREFIX));
 
@@ -82,9 +81,15 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
         .parent()
         .unwrap_or(Path::new("/"))
         .join(OUTPUT_DIR);
-    std::fs::create_dir_all(&target_dir).expect("Cannot create output directory");
+    std::fs::create_dir_all(&target_dir.join("src")).expect("Cannot create output directory");
 
-    let output_file_path = target_dir.join(OUTPUT_FILE_NAME);
+    // let out_dir = Path::new(env!("OUT_DIR"));
+
+    // copy_cargo_file(&out_dir.join("cargo.toml"), &target_dir);
+    // std::fs::copy(&out_dir.join("cargo.toml"), &target_dir)
+    //     .expect("Cannot copy dependency: cargo.toml");
+    let output_file_path = target_dir.join("src").join(OUTPUT_FILE_NAME);
+    let cargo_output_file_path = target_dir.join("Cargo.toml");
 
     match std::fs::write(
         &output_file_path,
@@ -101,6 +106,28 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
             err
         ),
     }
+    match std::fs::write(&cargo_output_file_path, get_cargo()) {
+        Ok(_) => (),
+        Err(err) => eprintln!(
+            "Failed to write to file {}: ({})",
+            output_file_path.display(),
+            err
+        ),
+    }
+    // fn copy_cargo_file(source: impl AsRef<Path>, destination: impl AsRef<Path>) {
+    //     let mut dir = fs::read_dir(source).unwrap();
+    //     let file = dir.find(|entry| {
+    //         entry
+    //             .as_ref()
+    //             .unwrap()
+    //             .file_name()
+    //             .into_string()
+    //             .unwrap()
+    //             .contains("Cargo.toml")
+    //     });
+    //     let file = file.unwrap().unwrap();
+    //     fs::copy(file.path(), destination.as_ref().join(file.file_name())).unwrap();
+    // }
 }
 
 fn run_interpreter() {
@@ -163,4 +190,22 @@ fn run_interpreter() {
             }
         }
     }
+}
+
+fn get_cargo() -> String {
+    format!(
+        r#"
+[package]
+name = "autobot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nom = "7.1.3"
+open = "3.2.0"
+
+    "#
+    )
 }

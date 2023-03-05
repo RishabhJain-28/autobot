@@ -96,7 +96,7 @@ fn parse_escaped_whitespace<'a, E: ParseError<&'a str>>(
 fn parse_literal<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &'a str, E> {
     // `is_not` parses a string of 0 or more characters that aren't one of the
     // given characters.
-    let not_quote_slash = is_not("\"\\");
+    let not_quote_slash = is_not("\"");
 
     // `verify` runs a parser, then runs a verification function on the output of
     // the parser. The verification function accepts out output only if it

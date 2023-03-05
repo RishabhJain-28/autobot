@@ -61,7 +61,7 @@ fn translate_to_rust_statement(
 ) -> String {
     match analyzed_statement {
         AnalyzedStatement::Function(keyword, vec_expr) => {
-            unimplemented!()
+            unimplemented!("AnalyzedStatement::Function")
         }
         AnalyzedStatement::Assignment(handle, expr) => format!(
             "_{} = {}",

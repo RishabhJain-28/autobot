@@ -2,7 +2,6 @@ pub mod input_utill;
 pub mod keyword;
 pub mod types;
 pub mod value;
-
 #[allow(dead_code)]
 pub fn input_string() -> String {
     //Infallible

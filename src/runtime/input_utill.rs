@@ -3,6 +3,7 @@ use std::{io::Write, str::FromStr};
 
 #[allow(dead_code)]
 pub fn input_type<T: FromStr>(prompt: Option<&str>) -> Result<T, <T as FromStr>::Err> {
+    // let mut text = r#""#.to_string();
     let mut text = String::new();
     eprint!("{}", prompt.unwrap_or("$ "));
     std::io::stderr().flush().unwrap();
@@ -17,6 +18,7 @@ pub fn input_type<T: FromStr>(prompt: Option<&str>) -> Result<T, <T as FromStr>:
 #[allow(dead_code)]
 pub fn input(input_type: Type, prompt: Option<&str>) -> Result<Value, String> {
     let mut text = String::new();
+    // let mut text = r#""#.to_string();
     eprint!("{}", prompt.unwrap_or("$ "));
     std::io::stderr().flush().unwrap();
     std::io::stdin()
@@ -45,6 +47,7 @@ pub fn input(input_type: Type, prompt: Option<&str>) -> Result<Value, String> {
 
 #[allow(dead_code)]
 pub fn input_type_untill<T: FromStr>(prompt: Option<&str>, error_propmt: Option<&str>) -> T {
+    // let mut text = r#""#.to_string();
     let mut text = String::new();
 
     loop {
