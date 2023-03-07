@@ -78,6 +78,9 @@ fn translate_to_rust_statement(
     analyzed_statement: &AnalyzedStatement,
 ) -> String {
     match analyzed_statement {
+        AnalyzedStatement::Shortcut(_val) => {
+            unimplemented!()
+        }
         AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
             Keywords::Open(open) => {
                 let path_arg = translate_to_rust_expr(variables, &vec_expr[0]);
@@ -117,7 +120,7 @@ fn translate_to_rust_statement(
     }
 }
 pub fn translate_to_rust_program(
-    variables: &SymbolTable,
+    variables: &mut SymbolTable,
     analyzed_program: &AnalyzedProgram,
 ) -> String {
     let mut rust_program = String::new();

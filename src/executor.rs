@@ -3,6 +3,7 @@ use crate::{
         AnalyzedExpr, AnalyzedFactor, AnalyzedFactorEnum, AnalyzedLiteral, AnalyzedProgram,
         AnalyzedStatement, AnalyzedTerm,
     },
+    compiler::compile_program,
     parser::TermOperator,
     runtime::{
         keyword::{Keyword, Keywords},
@@ -17,7 +18,7 @@ fn evaluate_factor<'a>(variables: &SymbolTable, factor: &'a AnalyzedFactor) -> V
         AnalyzedFactorEnum::Identifier(handle) => variables.get_value(*handle),
         AnalyzedFactorEnum::Literal(literal) => match literal {
             //TODO: remove clone
-            AnalyzedLiteral::String(string) => Value::String(String::clone(*string)),
+            AnalyzedLiteral::String(string) => Value::String(String::clone(string)),
             AnalyzedLiteral::Number(number) => Value::Number(*number),
         },
         AnalyzedFactorEnum::SubExpression(expr) => evaluate_expr(variables, &*expr),
@@ -37,7 +38,7 @@ fn evaluate_term<'a>(variables: &'a SymbolTable, term: &'a AnalyzedTerm) -> Valu
     result
 }
 
-fn evaluate_expr<'a>(variables: &'a SymbolTable, expr: &'a AnalyzedExpr) -> Value {
+fn evaluate_expr<'a>(variables: &'a SymbolTable, expr: &AnalyzedExpr) -> Value {
     let mut result = evaluate_term(variables, &expr.expr.0);
 
     for term in &expr.expr.1 {
@@ -57,10 +58,12 @@ fn evaluate_expr<'a>(variables: &'a SymbolTable, expr: &'a AnalyzedExpr) -> Valu
 
 fn execute_statement<'a>(
     variables: &'a mut SymbolTable,
-    statement: &'a AnalyzedStatement,
+    statement: AnalyzedStatement,
 ) -> Result<(), String> {
     match statement {
         AnalyzedStatement::Shortcut(val) => {
+            let analyzed_program = val.body;
+            compile_program(SymbolTable::clone(variables), *analyzed_program)
             // compile body -> exe, AnalysedProgram + variables
             // register shortcut
             //
@@ -74,18 +77,18 @@ fn execute_statement<'a>(
         },
         AnalyzedStatement::Declaration(_) => Ok(()),
         AnalyzedStatement::Assignment(handle, expr) => {
-            let result = evaluate_expr(variables, expr);
-            variables.set_value(*handle, result);
+            let result = evaluate_expr(variables, &expr);
+            variables.set_value(handle, result);
             Ok(())
         }
         AnalyzedStatement::InputOperation(handle, type_info) => {
             let value = type_info.read_from_cli_to_value()?;
-            variables.set_value(*handle, value);
+            variables.set_value(handle, value);
             Ok(())
         }
 
         AnalyzedStatement::OutputOperation(expr) => {
-            let val = evaluate_expr(variables, expr);
+            let val = evaluate_expr(variables, &expr);
             println!("{}", val);
             Ok(())
         }
@@ -94,7 +97,7 @@ fn execute_statement<'a>(
 
 pub fn execute_program(
     variables: &mut SymbolTable,
-    analyzed_program: &AnalyzedProgram,
+    analyzed_program: AnalyzedProgram,
 ) -> Result<(), String> {
     for statement in analyzed_program {
         execute_statement(variables, statement)?

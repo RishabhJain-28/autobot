@@ -1,8 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use crate::runtime::{types::Type, value::Value};
 
 type SymbolEntry = (String, Value);
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SymbolTable {
     //TODO : imporve use map instead of vector
     entities: Vec<SymbolEntry>,

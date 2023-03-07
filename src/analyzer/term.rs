@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     parser::{ParsedTerm, TermOperator},
     runtime::types::Type,
@@ -6,16 +8,17 @@ use crate::{
 
 use super::factor::{analyze_factor, AnalyzedFactor};
 
-#[derive(Debug)]
-pub struct AnalyzedTerm<'a> {
-    pub term: (AnalyzedFactor<'a>, Vec<(TermOperator, AnalyzedFactor<'a>)>),
+#[derive(Debug, Serialize, Deserialize)]
+//TODO: remove lifetime var if not required
+pub struct AnalyzedTerm {
+    pub term: (AnalyzedFactor, Vec<(TermOperator, AnalyzedFactor)>),
     pub type_info: Type,
 }
 
 pub fn analyze_term<'a>(
     variables: &mut SymbolTable,
     parsed_term: &'a ParsedTerm,
-) -> Result<AnalyzedTerm<'a>, String> {
+) -> Result<AnalyzedTerm, String> {
     let first_factor = analyze_factor(variables, &parsed_term.0)?;
     let expected_term_type = first_factor.type_info;
 

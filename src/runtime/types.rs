@@ -1,11 +1,13 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 use super::{
     input_utill::{input_type, input_type_untill},
     value::Value,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Type {
     String,
     Number,

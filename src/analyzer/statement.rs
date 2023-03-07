@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     parser::ParsedStatement,
     runtime::{keyword::Keywords, types::Type},
@@ -10,13 +12,14 @@ use super::{
     shortcut::AnalyzedShortcut,
 };
 
-#[derive(Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum AnalyzedStatement<'a> {
     Declaration(usize),
     InputOperation(usize, Type),
-    OutputOperation(AnalyzedExpr<'a>),
-    Assignment(usize, AnalyzedExpr<'a>),
-    Function(Keywords, Vec<AnalyzedExpr<'a>>),
+    OutputOperation(AnalyzedExpr),
+    Assignment(usize, AnalyzedExpr),
+    Function(Keywords, Vec<AnalyzedExpr>),
+    #[serde(borrow)]
     Shortcut(AnalyzedShortcut<'a>),
 }
 
@@ -33,7 +36,7 @@ pub fn analyze_statement<'a>(
             ))
         }
         ParsedStatement::Function(keyword, vec_expr) => {
-            let analyzed_vec_expr: Vec<AnalyzedExpr<'a>> = match *keyword {
+            let analyzed_vec_expr: Vec<AnalyzedExpr> = match *keyword {
                 // TODO: remove hardcoded number of args, keyword should contain this info
                 Keywords::Open(_) => {
                     if vec_expr.len() > 1 {

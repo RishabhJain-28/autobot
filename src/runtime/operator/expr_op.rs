@@ -1,8 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use super::super::{types::Type, value::Value};
 
 use super::{Operator, BINARY_OP};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 // pub enum ExprOperator {
 //     Add,
 //     Subtract,
@@ -20,7 +22,7 @@ impl ExprOperator {
         ExprOperator::Subtract(SubOp)
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 
 pub struct AddOp;
 impl Operator<{ BINARY_OP }> for AddOp {
@@ -46,8 +48,7 @@ impl Operator<{ BINARY_OP }> for AddOp {
         res
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq)]
-
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub struct SubOp;
 impl Operator<{ BINARY_OP }> for SubOp {
     fn execute_op(&self, args: [Value; BINARY_OP]) -> Value {

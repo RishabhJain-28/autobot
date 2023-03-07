@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Keywords {
     Open(OpenKeyword),
     // WriteFile,
@@ -18,7 +20,7 @@ pub trait Keyword<Args> {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct OpenKeyword;
 impl OpenKeyword {
     const NAME: &str = "OpenKeyword";

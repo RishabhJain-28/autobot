@@ -11,6 +11,7 @@ use nom::{
     sequence::{delimited, preceded, tuple},
     IResult,
 };
+use serde::{Deserialize, Serialize};
 pub use shortcut::*;
 use unicode_string_parser::parse_string;
 
@@ -40,7 +41,7 @@ pub type ParsedExpr<'a> = (ParsedTerm<'a>, Vec<(ExprOperator, ParsedTerm<'a>)>);
 
 pub type ParsedTerm<'a> = (ParsedFactor<'a>, Vec<(TermOperator, ParsedFactor<'a>)>);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum TermOperator {
     Multiply,
     Divide,

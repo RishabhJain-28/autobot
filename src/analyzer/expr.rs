@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     parser::ParsedExpr,
     runtime::{operator::ExprOperator, types::Type},
@@ -6,15 +8,15 @@ use crate::{
 
 use super::term::{analyze_term, AnalyzedTerm};
 
-#[derive(Debug)]
-pub struct AnalyzedExpr<'a> {
-    pub expr: (AnalyzedTerm<'a>, Vec<(ExprOperator, AnalyzedTerm<'a>)>),
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AnalyzedExpr {
+    pub expr: (AnalyzedTerm, Vec<(ExprOperator, AnalyzedTerm)>),
     pub type_info: Type,
 }
 pub fn analyze_expr<'a>(
     variables: &mut SymbolTable,
     parsed_expr: &'a ParsedExpr,
-) -> Result<AnalyzedExpr<'a>, String> {
+) -> Result<AnalyzedExpr, String> {
     let first_term = analyze_term(variables, &parsed_expr.0)?;
 
     let expected_expr_type = first_term.type_info;

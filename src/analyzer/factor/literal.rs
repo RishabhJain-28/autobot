@@ -1,10 +1,12 @@
-#[derive(Debug)]
-pub enum AnalyzedLiteral<'a> {
-    String(&'a String),
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum AnalyzedLiteral {
+    String(String),
     Number(f64),
 }
 
-impl<'a> ToString for AnalyzedLiteral<'a> {
+impl ToString for AnalyzedLiteral {
     fn to_string(&self) -> String {
         match self {
             Self::Number(num) => num.to_string() + "f64",

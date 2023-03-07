@@ -1,14 +1,16 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{analyzer::AnalyzedExpr, runtime::types::Type};
 
 use super::literal::AnalyzedLiteral;
 
-#[derive(Debug)]
-pub struct AnalyzedFactor<'a> {
-    pub factor: AnalyzedFactorEnum<'a>,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AnalyzedFactor {
+    pub factor: AnalyzedFactorEnum,
     pub type_info: Type,
 }
-impl<'a> AnalyzedFactor<'a> {
-    pub fn from_literal(literal: AnalyzedLiteral<'a>) -> Self {
+impl AnalyzedFactor {
+    pub fn from_literal(literal: AnalyzedLiteral) -> Self {
         match literal {
             AnalyzedLiteral::Number(_) => Self {
                 factor: AnalyzedFactorEnum::Literal(literal),
@@ -28,17 +30,18 @@ impl<'a> AnalyzedFactor<'a> {
         }
     }
 
-    pub fn from_analysed_expression(expr: AnalyzedExpr<'a>) -> Self {
+    pub fn from_analysed_expression(expr: AnalyzedExpr) -> Self {
         Self {
             type_info: expr.type_info,
-            factor: AnalyzedFactorEnum::SubExpression(Box::<AnalyzedExpr<'a>>::new(expr)),
+            factor: AnalyzedFactorEnum::SubExpression(Box::<AnalyzedExpr>::new(expr)),
         }
     }
 }
 
-#[derive(Debug)]
-pub enum AnalyzedFactorEnum<'a> {
-    Literal(AnalyzedLiteral<'a>),
+#[derive(Debug, Serialize, Deserialize)]
+pub enum AnalyzedFactorEnum {
+    Literal(AnalyzedLiteral),
     Identifier(usize),
-    SubExpression(Box<AnalyzedExpr<'a>>),
+    //TODO : remove static
+    SubExpression(Box<AnalyzedExpr>),
 }

@@ -3,9 +3,11 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
+use serde::{Deserialize, Serialize};
+
 use super::types::Type;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Value {
     String(String),
     Number(f64),

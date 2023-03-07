@@ -12,14 +12,15 @@ use super::expr::analyze_expr;
 pub fn analyze_factor<'a>(
     variables: &mut SymbolTable,
     parsed_factor: &'a ParsedFactor,
-) -> Result<AnalyzedFactor<'a>, String> {
+) -> Result<AnalyzedFactor, String> {
     match parsed_factor {
         ParsedFactor::Literal(literal) => match literal {
             ParsedLiteral::Number(val) => {
                 Ok(AnalyzedFactor::from_literal(AnalyzedLiteral::Number(*val)))
             }
             ParsedLiteral::String(string) => Ok(AnalyzedFactor::from_literal(
-                AnalyzedLiteral::String(string),
+                AnalyzedLiteral::String(String::clone(string)),
+                //TODO: remove clone
             )),
         },
         ParsedFactor::Identifier(name) => {
