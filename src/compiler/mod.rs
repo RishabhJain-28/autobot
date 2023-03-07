@@ -4,17 +4,24 @@ pub use compiler_to_rust::*;
 use crate::{analyzer::AnalyzedProgram, symbol_table::SymbolTable};
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
-struct CompiledAB<'a> {
+pub struct CompiledAB<'a> {
     #[serde(borrow)]
-    code: AnalyzedProgram<'a>,
+    pub code: AnalyzedProgram<'a>,
 
-    variables: SymbolTable,
+    pub variables: SymbolTable,
+}
+
+impl<'a> CompiledAB<'a> {
+    pub fn get_code_variables(self) -> (AnalyzedProgram<'a>, SymbolTable) {
+        (self.code, self.variables)
+    }
 }
 
 //just serialize for now
 pub fn compile_program(
     variables: SymbolTable,
     analyzed_program: AnalyzedProgram,
+    name: &str,
 ) -> Result<(), String> {
     let res = serde_json::to_string_pretty(&CompiledAB {
         code: analyzed_program,
@@ -23,12 +30,12 @@ pub fn compile_program(
     .unwrap();
     println!("json : {}", res);
 
-    // match std::fs::write(SHORTCUT_DB, res) {
-    //     Err(err) => {
-    //         return Err(format!("Err occured while saving : {}", err));
-    //     }
-    //     Ok(_) => (),
-    // }
+    match std::fs::write(String::from(name) + ".json", res) {
+        Err(err) => {
+            return Err(format!("Err occured while saving : {}", err));
+        }
+        Ok(_) => Ok(()),
+    }
 
-    unimplemented!()
+    // unimplemented!()
 }

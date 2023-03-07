@@ -11,6 +11,7 @@ pub struct AnalyzedShortcut<'a> {
     pub name: &'a str,
     pub body: Box<AnalyzedProgram<'a>>,
     pub flag: bool,
+    pub symbol_table: symbol_table::SymbolTable,
 }
 
 impl<'a> AnalyzedShortcut<'a> {
@@ -23,6 +24,7 @@ impl<'a> AnalyzedShortcut<'a> {
             mode: value.0 .0 .0.clone(), //TODO : convert to keystroke
             key: value.0 .1 .0,          //TODO : convert char to keystroke
             name: value.0 .3,
+            symbol_table: variables,
         })
     }
 }

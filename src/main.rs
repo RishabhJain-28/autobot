@@ -1,4 +1,4 @@
-use compiler::translate_to_rust_program;
+use compiler::{translate_to_rust_program, CompiledAB};
 
 use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
 use std::{ffi::OsStr, path::Path};
@@ -12,11 +12,11 @@ mod shortcuts;
 mod symbol_table;
 
 const CALC_PREFIX: &str = "ab";
+const COMPILED_PREFIX: &str = "json";
 const OUTPUT_DIR: &str = "output";
 const OUTPUT_FILE_NAME: &str = "main.rs";
 fn main() {
     let mut args = std::env::args();
-
     let _current_path = args.next();
 
     let flag_or_source = args.next();
@@ -37,9 +37,16 @@ fn main() {
                 eprintln!("ERROR in '{} ' {}", source, res.unwrap_err())
             }
         }
+        "-e" => {
+            let source = args.next().unwrap();
+            let res = execute_precompiled(&source);
+            if res.is_err() {
+                eprintln!("ERROR in '{} ' {}", source, res.unwrap_err())
+            }
+        }
         _ => {
             let source = flag_or_source;
-            let res = execute_file(&source);
+            let res = compile_and_execute_file(&source);
             if res.is_err() {
                 eprintln!("ERROR in '{} ' {}", source, res.unwrap_err())
             }
@@ -47,10 +54,10 @@ fn main() {
     }
 }
 
-fn get_program_from_file(source_path: &Path) -> Result<String, String> {
+fn get_program_from_file(source_path: &Path, ext: &str) -> Result<String, String> {
     let source_ext = source_path.extension().unwrap_or(OsStr::new(CALC_PREFIX));
 
-    if source_ext != CALC_PREFIX {
+    if source_ext != ext {
         return Err(format!(
             "Invalid argument {}, file must end with {}",
             source_path.display(),
@@ -126,7 +133,7 @@ fn analyse_and_execute<'a>(
 }
 fn compile_to_rust(source_path: &str) -> Result<(), String> {
     let source_path = Path::new(source_path);
-    let source_code = get_program_from_file(source_path)?;
+    let source_code = get_program_from_file(source_path, CALC_PREFIX)?;
     let syntax_tree = parse_input(&source_code)?;
     let variables = &mut symbol_table::SymbolTable::new();
     let compiled_code = analyse_and_compile(variables, &syntax_tree)?;
@@ -187,12 +194,23 @@ fn compile_to_rust(source_path: &str) -> Result<(), String> {
     // }
 }
 
-fn execute_file(source_path: &str) -> Result<(), String> {
+fn compile_and_execute_file(source_path: &str) -> Result<(), String> {
     let source_path = Path::new(source_path);
-    let source_code = get_program_from_file(source_path)?;
+    let source_code = get_program_from_file(source_path, CALC_PREFIX)?;
     let syntax_tree = parse_input(&source_code)?;
     let variables = &mut symbol_table::SymbolTable::new();
     analyse_and_execute(variables, &syntax_tree)
+}
+
+fn execute_precompiled(source_path: &str) -> Result<(), String> {
+    let source_path = Path::new(source_path);
+    let source_code = get_program_from_file(source_path, COMPILED_PREFIX)?;
+
+    let compiled = serde_json::from_str::<CompiledAB>(&source_code)
+        .expect(&format!("Couldnt deserealize {}", source_path.display()));
+
+    let (code, mut variables) = compiled.get_code_variables();
+    executor::execute_program(&mut variables, code)
 }
 
 fn run_interpreter() {

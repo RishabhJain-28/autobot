@@ -1,3 +1,6 @@
 on alt b :hello{
-    open "test.txt"
+    @a string
+    >a
+    <a
+    open a
 }
