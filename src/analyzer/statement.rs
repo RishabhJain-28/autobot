@@ -24,6 +24,10 @@ pub fn analyze_statement<'a>(
     parsed_statement: &'a ParsedStatement,
 ) -> Result<AnalyzedStatement<'a>, String> {
     match parsed_statement {
+        ParsedStatement::Shortcut(val) => {
+            println!("parsed shortcut: {:?}", val);
+            Err(format!("unimplemnted"))
+        }
         ParsedStatement::Function(keyword, vec_expr) => {
             let analyzed_vec_expr: Vec<AnalyzedExpr<'a>> = match *keyword {
                 // TODO: remove hardcoded number of args, keyword should contain this info

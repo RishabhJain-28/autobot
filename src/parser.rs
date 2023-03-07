@@ -1,6 +1,6 @@
 // CFG parser
+mod shortcut;
 mod unicode_string_parser;
-
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while},
@@ -15,10 +15,13 @@ use unicode_string_parser::parse_string;
 
 use crate::runtime::{keyword::Keywords, operator::ExprOperator, types::Type};
 
+use self::shortcut::{parse_shortcut, ParsedShortcut};
+
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
 
 #[derive(Debug, PartialEq)]
 pub enum ParsedStatement<'a> {
+    Shortcut(ParsedShortcut<'a>),
     Declaration(&'a str, Type),
     InputOperation(&'a str),
     OutputOperation(ParsedExpr<'a>),
@@ -61,6 +64,7 @@ pub fn parse_program(input: &str) -> IResult<&str, ParsedProgram> {
     many0(preceded(
         skip_spaces,
         alt((
+            parse_shortcut,
             parse_decleration,
             parse_input_statement,
             parse_output_statement,

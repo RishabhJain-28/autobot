@@ -1,8 +1,7 @@
 <program> ::= "" | <program> <statement>
-<statement> ::=  @ <identifier> <type> | > <identifier> | < <expr> | <function> | <identifier> := <expr> | on <shortcut>  
+<statement> ::=  @ <identifier> <type> | > <identifier> | < <expr> | <function> | <identifier> := <expr> | on  <shortcut_head> <shortcut_body>  
 <type>::= string | number
 
-<shortcut> ::= <shortcut_head> <shortcut_body>
 <shortcut_head> ::= <modes> <key> <shortcut_flag> : <identifier>
 <shortcut_body> ::= { <parsed_program> }
 <modes> ::= <mode_val> | <mode_val> <modes>

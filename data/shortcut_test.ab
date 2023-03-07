@@ -1,0 +1,3 @@
+on alt b : hello {
+    open "test.txt"
+}

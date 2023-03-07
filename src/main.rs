@@ -9,7 +9,9 @@ mod parser;
 mod runtime;
 mod shortcuts;
 mod symbol_table;
-
+const CALC_PREFIX: &str = "ab";
+const OUTPUT_DIR: &str = "output";
+const OUTPUT_FILE_NAME: &str = "main.rs";
 fn main() {
     let mut args = std::env::args();
 
@@ -32,15 +34,13 @@ fn main() {
         }
         _ => {
             //TODO: create file executor
-            unimplemented!()
+            let source = flag_or_source;
+            execute_file(&current_path.unwrap(), &source);
         }
     }
 }
 
 fn compile_to_rust(_current_path: &str, source_path: &str) {
-    const CALC_PREFIX: &str = "ab";
-    const OUTPUT_DIR: &str = "output";
-    const OUTPUT_FILE_NAME: &str = "main.rs";
     let source_path = Path::new(source_path);
     let source_ext = source_path.extension().unwrap_or(OsStr::new(CALC_PREFIX));
 
@@ -68,7 +68,7 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
 
     if parsed_program.is_err() {
         eprintln!(
-            "Invalid code in '{}': \n\nErr: {:?}",
+            "Error: [parser] in '{}': \n\nErr: {:?}",
             source_path.display(),
             parsed_program.unwrap_err()
         );
@@ -78,7 +78,7 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
     let trimmed_rest = rest.trim();
     if trimmed_rest.len() > 0 {
         eprintln!(
-            "Invalid code in '{}': \n\nErr: {}",
+            "Error: [parser]:  Remaining input in '{}': \n\nErr: {}",
             source_path.display(),
             trimmed_rest
         );
@@ -88,7 +88,7 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
     let analyzed_program = analyzer::analyze_program(&mut variables, &syntax_tree);
     if analyzed_program.is_err() {
         eprintln!(
-            "Invalid code in '{}': \n\nErr: {}",
+            "Error: [analyzer]  in '{}': \n\nErr: {}",
             source_path.display(),
             analyzed_program.unwrap_err()
         );
@@ -146,6 +146,69 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
     //     let file = file.unwrap().unwrap();
     //     fs::copy(file.path(), destination.as_ref().join(file.file_name())).unwrap();
     // }
+}
+
+fn execute_file(_current_path: &str, source_path: &str) {
+    let source_path = Path::new(source_path);
+    let source_ext = source_path.extension().unwrap_or(OsStr::new(CALC_PREFIX));
+
+    if source_ext != CALC_PREFIX {
+        return eprintln!(
+            "Invalid argument {}, file must end with {}",
+            source_path.display(),
+            CALC_PREFIX
+        );
+    }
+
+    let source_code = std::fs::read_to_string(source_path);
+
+    if source_code.is_err() {
+        return eprintln!(
+            "Error reading file {}\n {}",
+            source_path.display(),
+            source_code.unwrap_err()
+        );
+    }
+
+    let source_code = source_code.unwrap();
+
+    let parsed_program = parser::parse_program(&source_code);
+
+    if parsed_program.is_err() {
+        eprintln!(
+            "Error: [parser] in '{}': \n\nErr: {:?}",
+            source_path.display(),
+            parsed_program.unwrap_err()
+        );
+        return;
+    }
+    let (rest, syntax_tree) = parsed_program.unwrap();
+    let trimmed_rest = rest.trim();
+    if trimmed_rest.len() > 0 {
+        eprintln!(
+            "Error: [parser]: Remaining input in '{}': \n\nErr: {}",
+            source_path.display(),
+            trimmed_rest
+        );
+        return;
+    }
+    let mut variables = symbol_table::SymbolTable::new();
+    let analyzed_program = analyzer::analyze_program(&mut variables, &syntax_tree);
+    if analyzed_program.is_err() {
+        eprintln!(
+            "Error: [analyser] in '{}': \n\nErr: {}",
+            source_path.display(),
+            analyzed_program.unwrap_err()
+        );
+        return;
+    }
+    let analyzed_tree = analyzed_program.unwrap();
+    match executor::execute_program(&mut variables, &analyzed_tree) {
+        Ok(_) => (),
+        Err(err) => {
+            eprintln!("Error: {}", err);
+        }
+    };
 }
 
 fn run_interpreter() {
