@@ -14,21 +14,21 @@ use super::{parse_identifier, parse_program, skip_spaces, ParsedProgram, ParsedS
 use crate::runtime::keyboard::KeyModes;
 
 #[derive(Debug, PartialEq)]
-pub struct ParsedShortcut<'a>(ParsedShortcutHead<'a>, ParsedShortcutBody<'a>);
+pub struct ParsedShortcut<'a>(pub ParsedShortcutHead<'a>, pub ParsedShortcutBody<'a>);
 #[derive(Debug, PartialEq)]
-pub struct ParsedShortcutHead<'a>(ParsedModes, ParsedKey, ParsedFlag, &'a str);
+pub struct ParsedShortcutHead<'a>(pub ParsedModes, pub ParsedKey, pub ParsedFlag, pub &'a str);
 #[derive(Debug, PartialEq)]
 // TODO : shortcuts are right no nestable? is that okay
-pub struct ParsedShortcutBody<'a>(Box<ParsedProgram<'a>>);
+pub struct ParsedShortcutBody<'a>(pub Box<ParsedProgram<'a>>);
 #[derive(Debug, PartialEq)]
-pub struct ParsedModes(Vec<KeyModes>);
+pub struct ParsedModes(pub Vec<KeyModes>);
 #[derive(Debug, PartialEq)]
 
 //TODO : replace char with enum
-pub struct ParsedKey(char);
+pub struct ParsedKey(pub char);
 #[derive(Debug, PartialEq)]
 
-pub struct ParsedFlag(bool);
+pub struct ParsedFlag(pub bool);
 
 pub fn parse_shortcut(input: &str) -> IResult<&str, ParsedStatement> {
     tuple((tag("on"), parse_shortcut_head, parse_shortcut_body))(input).map(|(input, output)| {

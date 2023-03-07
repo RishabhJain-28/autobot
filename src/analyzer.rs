@@ -2,6 +2,7 @@
 mod error;
 mod expr;
 mod factor;
+mod shortcut;
 mod statement;
 mod term;
 

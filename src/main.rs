@@ -3,12 +3,14 @@ use std::{ffi::OsStr, path::Path};
 use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
 
 mod analyzer;
-mod compiler;
+mod compile;
+mod compiler_to_rust;
 mod executor;
 mod parser;
 mod runtime;
 mod shortcuts;
 mod symbol_table;
+
 const CALC_PREFIX: &str = "ab";
 const OUTPUT_DIR: &str = "output";
 const OUTPUT_FILE_NAME: &str = "main.rs";
@@ -111,7 +113,7 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
 
     match std::fs::write(
         &output_file_path,
-        compiler::translate_to_rust_program(&variables, &analyzed_program),
+        compiler_to_rust::translate_to_rust_program(&variables, &analyzed_program),
     ) {
         Ok(_) => eprintln!(
             "Compiled {} to {}.",

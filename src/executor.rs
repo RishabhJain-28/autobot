@@ -60,6 +60,12 @@ fn execute_statement<'a>(
     statement: &'a AnalyzedStatement,
 ) -> Result<(), String> {
     match statement {
+        AnalyzedStatement::Shortcut(val) => {
+            // compile body -> exe, AnalysedProgram + variables
+            // register shortcut
+            //
+            // unimplemented!()
+        }
         AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
             Keywords::Open(open) => {
                 let path = evaluate_expr(variables, &vec_expr[0]);

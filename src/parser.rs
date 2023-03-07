@@ -11,11 +11,10 @@ use nom::{
     sequence::{delimited, preceded, tuple},
     IResult,
 };
+pub use shortcut::*;
 use unicode_string_parser::parse_string;
 
 use crate::runtime::{keyword::Keywords, operator::ExprOperator, types::Type};
-
-use self::shortcut::{parse_shortcut, ParsedShortcut};
 
 pub type ParsedProgram<'a> = Vec<ParsedStatement<'a>>;
 

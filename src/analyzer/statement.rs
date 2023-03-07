@@ -7,6 +7,7 @@ use crate::{
 use super::{
     error::AnalyzerError,
     expr::{analyze_expr, AnalyzedExpr},
+    shortcut::AnalyzedShortcut,
 };
 
 #[derive(Debug)]
@@ -16,6 +17,7 @@ pub enum AnalyzedStatement<'a> {
     OutputOperation(AnalyzedExpr<'a>),
     Assignment(usize, AnalyzedExpr<'a>),
     Function(Keywords, Vec<AnalyzedExpr<'a>>),
+    Shortcut(AnalyzedShortcut<'a>),
 }
 
 //TODO: return AnalyserError instead of strings
@@ -25,8 +27,10 @@ pub fn analyze_statement<'a>(
 ) -> Result<AnalyzedStatement<'a>, String> {
     match parsed_statement {
         ParsedStatement::Shortcut(val) => {
-            println!("parsed shortcut: {:?}", val);
-            Err(format!("unimplemnted"))
+            //TODO : check if keys are valid // mostly they are
+            Ok(AnalyzedStatement::Shortcut(
+                AnalyzedShortcut::from_parsed_shortcut(val)?,
+            ))
         }
         ParsedStatement::Function(keyword, vec_expr) => {
             let analyzed_vec_expr: Vec<AnalyzedExpr<'a>> = match *keyword {
