@@ -7,16 +7,34 @@ mod compiler;
 mod executor;
 mod parser;
 mod runtime;
+mod shortcuts;
 mod symbol_table;
+
 fn main() {
     let mut args = std::env::args();
-    let current_path = args.next();
-    let source_path = args.next();
 
-    if source_path.is_none() {
+    let current_path = args.next();
+
+    let flag_or_source = args.next();
+    if flag_or_source.is_none() {
         return run_interpreter();
     }
-    compile_to_rust(&current_path.unwrap(), &source_path.unwrap());
+    let flag_or_source = flag_or_source.unwrap();
+
+    match flag_or_source.trim() {
+        "-d" => {
+            println!("daemon mode only");
+        }
+        "-c" => {
+            println!("compile mode");
+            let source = args.next();
+            compile_to_rust(&current_path.unwrap(), &source.unwrap());
+        }
+        _ => {
+            //TODO: create file executor
+            unimplemented!()
+        }
+    }
 }
 
 fn compile_to_rust(_current_path: &str, source_path: &str) {
@@ -131,6 +149,8 @@ fn compile_to_rust(_current_path: &str, source_path: &str) {
 }
 
 fn run_interpreter() {
+    //TODO : start the daemon
+
     eprintln!("* Calc interactive interpreter *");
     let mut variables = symbol_table::SymbolTable::new();
     loop {

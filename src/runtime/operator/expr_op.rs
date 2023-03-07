@@ -43,7 +43,6 @@ impl Operator<{ BINARY_OP }> for AddOp {
             (_, _) => panic!("Invalid Addition"),
         }
 
-        println!("{}", res);
         res
     }
 }

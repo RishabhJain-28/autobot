@@ -1,9 +1,9 @@
+mod register;
 use serde_with::{
     serde::{Deserialize, Serialize},
     serde_as,
 };
 use std::{collections::HashMap, path::Path};
-
 const SHORTCUT_DB: &str = "autobot_shortcuts.json";
 
 #[serde_as]

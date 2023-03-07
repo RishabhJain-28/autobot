@@ -1,10 +1,19 @@
 <program> ::= "" | <program> <statement>
-<statement> ::=  @ <identifier> <type> | > <identifier> | < <expr> | <function> | <identifier> := <expr>  
+<statement> ::=  @ <identifier> <type> | > <identifier> | < <expr> | <function> | <identifier> := <expr> | on <shortcut>  
 <type>::= string | number
 
-<function> ::= open <expr>  | write_file <expr> <expr>
+<shortcut> ::= <shortcut_head> <shortcut_body>
+<shortcut_head> ::= <modes> <key> <shortcut_flag> : <identifier>
+<shortcut_body> ::= { <parsed_program> }
+<modes> ::= <mode_val> | <mode_val> <modes>
+<mode_val> ::= alt | ctrl | shift   
+//TODO add more keys
+<key>::= <letter> | <digit> 
+<shortcut_flag> ::= "" | on_hold_repeat
 
-// <args> ::= <expr> | <args> <expr>
+
+<function> ::= open <expr>
+<args> ::= <expr> | <args> <expr>
   
 <expr> ::= <term> | <expr> + <term> | <expr> - <term>
 <term> ::= <factor> | <term> \* <factor> | <term> / <factor>
@@ -15,5 +24,5 @@
 <string>::= <letter> | <string> <letter>
 <identifier> := <letter> | <identifier> <letter>
 
-primitives : <letter> , <double>
+primitives : <letter> , <double> , <digit>
     
