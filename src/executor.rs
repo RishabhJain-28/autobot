@@ -10,6 +10,7 @@ use crate::{
         operator::{ExprOperator, Operator},
         value::Value,
     },
+    shortcuts_map::{read_shortcuts, ShortcutFile},
     symbol_table::SymbolTable,
 };
 
@@ -63,13 +64,20 @@ fn execute_statement<'a>(
     match statement {
         AnalyzedStatement::Shortcut(val) => {
             let analyzed_program = val.body;
-            // compile_program(SymbolTable::clone(variables), *analyzed_program, val.name)
-            compile_program(val.symbol_table, *analyzed_program, val.name)
+            compile_program(val.symbol_table, *analyzed_program, val.name)?;
 
-            // compile body -> exe, AnalysedProgram + variables
-            // register shortcut
-            //
-            // unimplemented!()
+            let mut shortcut = read_shortcuts();
+            let mut keys: Vec<&str> = Vec::new();
+            for key_mode in &val.mode {
+                keys.push(key_mode.into());
+            }
+
+            let keybind = &val.key.to_string();
+            keys.push(&keybind);
+            shortcut.save_shortcut(&mut keys, ShortcutFile(val.name.to_string(), val.flag))?;
+            //todo : update daemon so that it doesnt have to be manullay restarted
+            println!("Shortcut added\nRestart the daemon !!!");
+            Ok(())
         }
         AnalyzedStatement::Function(keyword, vec_expr) => match keyword {
             Keywords::Open(open) => {

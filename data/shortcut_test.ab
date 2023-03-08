@@ -1,6 +1,11 @@
-on alt b :hello{
-    @a string
-    >a
-    <a
-    open a
+on alt d : test {
+    < "alt cd" 
+    open "language.txt"
+}
+on alt c : searchgoogle {
+    < "alt c" 
+    @keyword string
+    >keyword
+    <keyword
+    open "www.google.com/search?q=" +keyword 
 }

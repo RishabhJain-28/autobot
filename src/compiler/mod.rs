@@ -29,14 +29,11 @@ pub fn compile_program(
         variables: variables,
     })
     .unwrap();
-    println!("json : {}", res);
-
-    match std::fs::write( format!("{}.json",String::from(name)), res) {
+    //todo: fix file location
+    match std::fs::write(format!("{}.json", String::from(name)), res) {
         Err(err) => {
             return Err(format!("Err occured while saving : {}", err));
         }
         Ok(_) => Ok(()),
     }
-
-    // unimplemented!()
 }

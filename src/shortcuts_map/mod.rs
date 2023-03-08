@@ -1,16 +1,18 @@
-mod register;
 use serde_with::{
     serde::{Deserialize, Serialize},
     serde_as,
 };
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, ops::Deref, path::Path};
 const SHORTCUT_DB: &str = "autobot_shortcuts.json";
+//TODO : simply the shortcut map
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ShortcutFile(pub String, pub bool);
 
 #[serde_as]
 #[derive(Deserialize, Serialize, Debug)]
-struct ShortcutMapValue {
-    file: Option<String>,
-    map: Option<Box<ShortcutMap>>,
+pub struct ShortcutMapValue {
+    pub file: Option<ShortcutFile>,
+    pub map: Option<Box<ShortcutMap>>,
 }
 
 impl ShortcutMapValue {
@@ -34,13 +36,14 @@ impl ShortcutMapValue {
 fn insert_shortcut<'a>(
     shortcut_map_value: &mut ShortcutMapValue,
     mut keys: impl Iterator<Item = &'a mut &'a str> + 'a,
-    file: &str,
+    file: ShortcutFile,
 ) -> Result<(), String> {
     let first = keys.next();
 
     if first.is_none() {
         //TODO: remove to string
-        shortcut_map_value.file = Some(file.to_string());
+
+        shortcut_map_value.file = Some(file);
         return Ok(());
     };
 
@@ -60,7 +63,7 @@ fn insert_shortcut<'a>(
 
 #[serde_as]
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ShortcutMap(HashMap<String, ShortcutMapValue>);
+pub struct ShortcutMap(pub HashMap<String, ShortcutMapValue>);
 impl ShortcutMap {
     pub fn new() -> Self {
         Self(HashMap::new())
@@ -68,7 +71,7 @@ impl ShortcutMap {
     pub fn save_shortcut<'a>(
         &'a mut self,
         keys: &'a mut Vec<&'a str>,
-        file: &str,
+        file: ShortcutFile,
     ) -> Result<(), String> {
         //TODO : check shortcut file validity exists?
         let mut keys_it = keys.iter_mut();
@@ -79,9 +82,7 @@ impl ShortcutMap {
         };
         let first = first.unwrap();
         insert_shortcut(self.get_or_create_key_map_mut(first), keys_it, file)?;
-        println!("{:?}", self);
         let res = serde_json::to_string_pretty(&self).unwrap();
-        println!("json : {}", res);
 
         match std::fs::write(SHORTCUT_DB, res) {
             Err(err) => {
@@ -103,6 +104,13 @@ impl ShortcutMap {
             );
         }
         self.0.get_mut(key).unwrap()
+    }
+}
+
+impl Deref for ShortcutMap {
+    type Target = HashMap<String, ShortcutMapValue>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

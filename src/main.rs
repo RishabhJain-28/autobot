@@ -1,16 +1,19 @@
 use compiler::{translate_to_rust_program, CompiledAB};
+use daemon::run_daemon;
 
 use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
 use std::{ffi::OsStr, path::Path};
 
 mod analyzer;
 mod compiler;
+mod daemon;
 mod executor;
 mod parser;
 mod runtime;
-mod shortcuts;
+mod shortcuts_map;
 mod symbol_table;
 
+//TODO: FIX MULTIPLE SHORTCUT MODES PARSING
 const CALC_PREFIX: &str = "ab";
 const COMPILED_PREFIX: &str = "json";
 const OUTPUT_DIR: &str = "output";
@@ -27,7 +30,8 @@ fn main() {
 
     match flag_or_source.trim() {
         "-d" => {
-            println!("daemon mode only");
+            // println!("daemon mode only");
+            run_daemon();
         }
         "-c" => {
             eprintln!("* Compiling to rust *");
@@ -61,7 +65,7 @@ fn get_program_from_file(source_path: &Path, ext: &str) -> Result<String, String
         return Err(format!(
             "Invalid argument {}, file must end with {}",
             source_path.display(),
-            CALC_PREFIX
+            ext
         ));
     }
 
@@ -238,7 +242,7 @@ fn run_interpreter() {
     }
     fn input_command() -> String {
         let mut text = String::new();
-        eprint!("> ");
+        eprint!("Let me do it  ");
         std::io::stdin()
             .read_line(&mut text)
             .expect("Cannot read line.");
