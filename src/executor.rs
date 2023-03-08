@@ -65,6 +65,7 @@ fn execute_statement<'a>(
             let analyzed_program = val.body;
             // compile_program(SymbolTable::clone(variables), *analyzed_program, val.name)
             compile_program(val.symbol_table, *analyzed_program, val.name)
+
             // compile body -> exe, AnalysedProgram + variables
             // register shortcut
             //

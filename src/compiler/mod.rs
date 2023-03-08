@@ -1,5 +1,6 @@
 mod compiler_to_rust;
 pub use compiler_to_rust::*;
+use serde_with::formats;
 
 use crate::{analyzer::AnalyzedProgram, symbol_table::SymbolTable};
 use serde::{Deserialize, Serialize};
@@ -30,7 +31,7 @@ pub fn compile_program(
     .unwrap();
     println!("json : {}", res);
 
-    match std::fs::write(String::from(name) + ".json", res) {
+    match std::fs::write( format!("{}.json",String::from(name)), res) {
         Err(err) => {
             return Err(format!("Err occured while saving : {}", err));
         }
