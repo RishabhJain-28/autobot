@@ -1,6 +1,5 @@
 mod compiler_to_rust;
 pub use compiler_to_rust::*;
-use serde_with::formats;
 
 use crate::{analyzer::AnalyzedProgram, symbol_table::SymbolTable};
 use serde::{Deserialize, Serialize};
