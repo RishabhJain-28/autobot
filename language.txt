@@ -2,6 +2,7 @@
 <statement> ::=  @ <identifier> <type> | > <identifier> | < <expr> | <function> | <identifier> := <expr> | on  <shortcut_head> <shortcut_body>  
 <type>::= string | number
 //TODO shortcut name should be unique
+//TODO modes and keys should be the sdame thing , abstract modes away from lang to windows impl
 <shortcut_head> ::= <modes> <key> <shortcut_flag> : <identifier>
 <shortcut_body> ::= { <parsed_program> }
 <modes> ::= <mode_val> | <mode_val> <modes>
