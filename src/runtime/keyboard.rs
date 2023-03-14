@@ -6,13 +6,15 @@ use windows::Win32::UI::Input::KeyboardAndMouse;
 // };
 
 //TODO : remove partial eq
-#[derive(Debug, PartialEq, Deserialize, Serialize, Clone, Copy)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Clone, Copy, PartialOrd, Eq, Ord)]
 
 pub enum KeyModes {
     ALT,
     CTRL,
     SHIFT,
 }
+
+// impl Ord for KeyModes
 
 impl From<&KeyModes> for &str {
     fn from(value: &KeyModes) -> Self {
@@ -64,6 +66,22 @@ impl KeyModes {
                 panic!("invalid mode value")
             }
         }
+    }
+    pub fn get_modes_from_u32(ho: u32) -> Vec<Self> {
+        let mut val = ho;
+        let mut modes: Vec<Self> = vec![];
+        let mut key = 1;
+        while val != 0 {
+            if (val & 1) == 1 {
+                modes.push(KeyModes::from_windows_mode(
+                    KeyboardAndMouse::HOT_KEY_MODIFIERS(key),
+                ));
+            }
+            key = key * 2;
+            val = val >> 1;
+        }
+
+        modes
     }
 }
 

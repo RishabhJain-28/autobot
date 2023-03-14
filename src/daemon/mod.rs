@@ -12,7 +12,7 @@ use crate::shortcuts_map::{read_shortcuts, ShortcutFile, ShortcutMap};
 
 #[derive(Debug)]
 struct Record {
-    pub mode: Vec<KeyModes>,
+    pub modes: Vec<KeyModes>,
     pub repeat: bool,
     pub key: char,
 }
@@ -22,8 +22,9 @@ pub fn run_daemon() {
     let mut records: Vec<Record> = Vec::new();
     let mut modes: Vec<KeyModes> = Vec::new();
 
-    iterate_shortcut_map(&shortcuts, &mut records, &mut modes);
+    populate_records(&shortcuts, &mut records, &mut modes);
     register_records_with_windows(records);
+
     loop {
         let mut lpmsg = MSG::default();
         unsafe { GetMessageW(&mut lpmsg, None, 0, 0) };
@@ -31,65 +32,61 @@ pub fn run_daemon() {
             //TODO : imporve , find a better way to do this
             let ho = (lpmsg.lParam.0 & 0xffff) as u32;
             let lo = (lpmsg.lParam.0 & 0xffff00) as u32 >> 16;
-
-            // //TODO:  make recursive, mode would be a vector
             //TODO : check for repeat
-            let mode = KeyModes::from_windows_mode(KeyboardAndMouse::HOT_KEY_MODIFIERS(ho));
+
+            let mut key_modes: Vec<KeyModes> = KeyModes::get_modes_from_u32(ho);
+
+            key_modes.sort();
+            let mut modes: Vec<&str> = key_modes.iter().map(|v| <&str>::from(v)).collect();
+
             let key_char = convert_windows_virtual_key_code_to_key_char(
                 KeyboardAndMouse::VIRTUAL_KEY(lo as u16),
             );
+            let key_char = key_char.to_string();
+            modes.push(&key_char);
 
-            //TODO : FIX THIS CODE
-            let smv = shortcuts.get(&String::from(&mode));
+            let shortcut_file = shortcuts.get_file_from_key_iter(modes.into_iter().peekable());
 
-            if smv.is_some() {
-                let smv = smv.unwrap();
-                if smv.file.is_some() {
-                    //TODO : RUN FILE
+            if shortcut_file.is_some() {
+                let file_name = format!("{}.json", &shortcut_file.as_ref().unwrap().0);
+                let res = execute_precompiled(&file_name);
+                if res.is_err() {
+                    eprintln!("ERROR in '{} ' {}", file_name, res.unwrap_err())
                 }
-                if smv.map.is_some() {
-                    let file_smv = smv.map.as_ref().unwrap().get(&key_char.to_string());
-                    if file_smv.is_some() {
-                        let file_smv = file_smv.unwrap();
-                        let file = &file_smv.file;
-                        if file.is_some() {
-                            let file_name = format!("{}.json", &file.as_ref().unwrap().0);
-                            let res = execute_precompiled(&file_name);
-                            if res.is_err() {
-                                eprintln!("ERROR in '{} ' {}", file_name, res.unwrap_err())
-                            }
-                        }
-                    }
-                }
+            } else {
+                eprintln!("ERROR in daemon : no file with that shortcut found")
             }
         }
     }
 }
 
-fn iterate_shortcut_map(sm: &ShortcutMap, records: &mut Vec<Record>, modes: &mut Vec<KeyModes>) {
+fn populate_records(sm: &ShortcutMap, records: &mut Vec<Record>, modes: &mut Vec<KeyModes>) {
     for (key, value) in sm.iter() {
         if value.file.is_some() {
             let ShortcutFile(_, repeat) = value.file.as_ref().unwrap();
             records.push(Record {
                 key: key.chars().next().unwrap(),
-                mode: Vec::clone(modes),
+                modes: Vec::clone(modes),
                 repeat: *repeat,
             })
         }
-
         if value.map.is_some() {
             modes.push(KeyModes::from(key));
             let map = &*value.map.as_ref().unwrap();
-            iterate_shortcut_map(map, records, modes);
+            populate_records(map, records, modes);
             modes.pop();
         }
     }
 }
 
-//todo : fix codem add as a methid on reocrds struct
 fn register_records_with_windows(records: Vec<Record>) {
     for rec in records {
-        let mut mode = rec.mode.iter().next().unwrap().get_windows_key_mode();
+        let mut mode = rec
+            .modes
+            .iter()
+            .fold(KeyboardAndMouse::HOT_KEY_MODIFIERS(0), |mode, key| {
+                mode | key.get_windows_key_mode()
+            });
         if !rec.repeat {
             mode = mode | KeyboardAndMouse::MOD_NOREPEAT
         }

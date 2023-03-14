@@ -61,11 +61,14 @@ pub fn parse_shortcut_head(input: &str) -> IResult<&str, ParsedShortcutHead> {
 }
 
 pub fn parse_modes(input: &str) -> IResult<&str, ParsedModes> {
-    many1(alt((
-        map(tag("alt"), |_| KeyModes::ALT),
-        map(tag("ctrl"), |_| KeyModes::CTRL),
-        map(tag("shift"), |_| KeyModes::SHIFT),
-    )))(input)
+    many1(preceded(
+        skip_spaces,
+        alt((
+            map(tag("alt"), |_| KeyModes::ALT),
+            map(tag("ctrl"), |_| KeyModes::CTRL),
+            map(tag("shift"), |_| KeyModes::SHIFT),
+        )),
+    ))(input)
     .map(|(input, output)| (input, ParsedModes(output)))
 }
 

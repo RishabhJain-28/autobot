@@ -67,14 +67,12 @@ fn execute_statement<'a>(
             compile_program(val.symbol_table, *analyzed_program, val.name)?;
 
             let mut shortcut = read_shortcuts();
-            let mut keys: Vec<&str> = Vec::new();
-            for key_mode in &val.mode {
-                keys.push(key_mode.into());
-            }
-
-            let keybind = &val.key.to_string();
-            keys.push(&keybind);
-            shortcut.save_shortcut(&mut keys, ShortcutFile(val.name.to_string(), val.flag))?;
+            let mut keys = val.mode;
+            shortcut.save_shortcut(
+                &mut keys,
+                val.key,
+                ShortcutFile(val.name.to_string(), val.flag),
+            )?;
             //todo : update daemon so that it doesnt have to be manullay restarted
             println!("Shortcut added\nRestart the daemon !!!");
             Ok(())
