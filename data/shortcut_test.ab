@@ -4,5 +4,6 @@ on ctrl  alt  h : lang {
     open "language.txt"
 }
 on shift  d : test {
-    open "test.txt"
+    open "test\abc.txt"
+    open "language.txt"
 }

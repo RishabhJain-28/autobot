@@ -42,6 +42,7 @@ fn main() {
             }
         }
         "-e" => {
+            eprintln!("* Executing precompiled *");
             let source = args.next().unwrap();
             let res = execute_precompiled(&source);
             if res.is_err() {
@@ -115,7 +116,6 @@ fn analyse_and_compile<'a>(
     let analyzed_program = analyzed_program.unwrap();
 
     let variables = &mut symbol_table::SymbolTable::new();
-    // let analyzed_program = analyse_and_compile(variables, &syntax_tree)?;
     let compiled_code = translate_to_rust_program(variables, &analyzed_program);
     Ok(compiled_code)
 }

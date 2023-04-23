@@ -9,6 +9,7 @@ High level scripting language designed for hasle free system automation.
 - `>a` -> get value and store it in an identifier
 - `< some_expr` -> output an expression or a iddentifier
 - `open <string> ` -> open a file or a url
+- `on key1 key2 ... [flag] : shortcut_name { valid_autobot_code }` -> runs shortcut code
 
 ### Data Types
 
@@ -17,9 +18,10 @@ High level scripting language designed for hasle free system automation.
 
 ## Use:
 
-- `cargo r -- source.ab` => Convert a .ab file into .rs file.
-
 - `cargo r ` => If no file name is supplied , the interpreter mode starts.
+- `cargo r -- source.ab` => Run a .ab file.
+- `cargo r -- -c source.ab` => Convert a .ab file into .rs file.
+- `cargo r -d ` => Start the daemon to listen for shortcuts.
 
 ### Debug:
 

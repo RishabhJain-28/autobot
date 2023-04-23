@@ -51,7 +51,7 @@ pub fn run_daemon() {
                 let file_name = format!("{}.json", &shortcut_file.as_ref().unwrap().0);
                 let res = execute_precompiled(&file_name);
                 if res.is_err() {
-                    eprintln!("ERROR in '{} ' {}", file_name, res.unwrap_err())
+                    eprintln!("ERROR executing: {}", res.unwrap_err())
                 }
             } else {
                 eprintln!("ERROR in daemon : no file with that shortcut found")
