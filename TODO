@@ -1,0 +1,5 @@
+Check why GetMEssage is blocking
+    either service is not registering hot keys
+    or its not recieving ot keys
+        check service crating process, amybe if installed witrh differwent acc or flag
+        try setup install.rs and uninstall.rs and incorparat them in build script 
