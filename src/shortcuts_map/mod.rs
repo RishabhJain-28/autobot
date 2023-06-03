@@ -4,8 +4,9 @@ use serde_with::{
 };
 use std::{collections::HashMap, iter::Peekable, ops::Deref, path::Path};
 
-use crate::runtime::keyboard::KeyModes;
-const SHORTCUT_DB: &str = "autobot_shortcuts.json";
+use crate::{logger::LoggerComponent, runtime::keyboard::KeyModes};
+//TODO change => shouldnt be hardcoded
+const SHORTCUT_DB: &str = "D:\\Projects\\Rust\\Rust Projects\\autobot\\autobot_shortcuts.json";
 //TODO : simply the shortcut map
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ShortcutFile(pub String, pub bool);
@@ -144,11 +145,18 @@ pub fn read_shortcuts() -> ShortcutMap {
     let shortcut_db_path = Path::new(SHORTCUT_DB);
 
     if !std::path::Path::exists(&shortcut_db_path) {
+        LoggerComponent::Daemon.log(&format!("no file for shortcut_db_path"), None);
         return ShortcutMap::new();
     }
 
-    let file = std::fs::read_to_string(shortcut_db_path)
-        .expect(&format!("Error opening {}", shortcut_db_path.display(),));
+    let file = std::fs::read_to_string(shortcut_db_path);
+    if file.is_err() {
+        LoggerComponent::Daemon.log(
+            &format!("Error opening {}", shortcut_db_path.display()),
+            None,
+        );
+    }
+    let file = file.unwrap();
 
     let shortcut_map = serde_json::from_str::<ShortcutMap>(&file).expect(&format!(
         "Couldnt deserealize {}",

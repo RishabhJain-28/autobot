@@ -1,14 +1,23 @@
+use std::sync::mpsc::Receiver;
+use std::time::Duration;
+
 use windows::Win32::UI::Input::KeyboardAndMouse;
 use windows::Win32::UI::Input::KeyboardAndMouse::RegisterHotKey;
 use windows::Win32::UI::WindowsAndMessaging::GetMessageW;
 use windows::Win32::UI::WindowsAndMessaging::MSG;
 use windows::Win32::UI::WindowsAndMessaging::WM_HOTKEY;
 
+mod service_windows;
+
 use crate::execute_precompiled;
+use crate::logger::LoggerComponent;
 use crate::runtime::keyboard::{
     convert_key_char_to_windows_virtual_key, convert_windows_virtual_key_code_to_key_char, KeyModes,
 };
 use crate::shortcuts_map::{read_shortcuts, ShortcutFile, ShortcutMap};
+
+#[cfg(windows)]
+use self::service_windows::init_service;
 
 #[derive(Debug)]
 struct Record {
@@ -17,17 +26,44 @@ struct Record {
     pub key: char,
 }
 
-pub fn run_daemon() {
+pub fn register_daemon() {
+    //TODO run service based on platform
+
+    if let Err(e) = init_service() {
+        LoggerComponent::Daemon.log_error(e);
+    }
+}
+
+pub fn run_daemon(shutdown_rx: Receiver<()>) {
+    //TODO when does the daemon stop?
+    LoggerComponent::Daemon.log(&format!("INIT DAEMON"), None);
+    //test stop after 5 minutes
+
     let shortcuts = read_shortcuts();
     let mut records: Vec<Record> = Vec::new();
     let mut modes: Vec<KeyModes> = Vec::new();
+    LoggerComponent::Daemon.log(&format!("Got SH"), None);
+    let len = shortcuts.len();
+    LoggerComponent::Daemon.log(&format!("SH len: {len}"), None);
 
     populate_records(&shortcuts, &mut records, &mut modes);
     register_records_with_windows(records);
 
     loop {
+        //TODO uncomment
+
+        // match shutdown_rx.recv_timeout(Duration::from_secs(1)) {
+        //     // Break the loop either upon stop or channel disconnect
+        //     Ok(_) | Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+
+        //     // Continue work if no events were received within the timeout
+        //     Err(std::sync::mpsc::RecvTimeoutError::Timeout) => (),
+        // };
+        LoggerComponent::Daemon.log(&format!("linstening"), None);
+
         let mut lpmsg = MSG::default();
         unsafe { GetMessageW(&mut lpmsg, None, 0, 0) };
+        LoggerComponent::Daemon.log(&format!("GOT MSG"), None);
         if lpmsg.message == WM_HOTKEY {
             //TODO : imporve , find a better way to do this
             let ho = (lpmsg.lParam.0 & 0xffff) as u32;
@@ -51,9 +87,15 @@ pub fn run_daemon() {
                 let file_name = format!("{}.json", &shortcut_file.as_ref().unwrap().0);
                 let res = execute_precompiled(&file_name);
                 if res.is_err() {
+                    LoggerComponent::Daemon.log(&format!("ERROR executing"), None);
+
                     eprintln!("ERROR executing: {}", res.unwrap_err())
                 }
             } else {
+                LoggerComponent::Daemon.log(
+                    &format!("ERROR in daemon : no file with that shortcut found"),
+                    None,
+                );
                 eprintln!("ERROR in daemon : no file with that shortcut found")
             }
         }

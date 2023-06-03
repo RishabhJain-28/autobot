@@ -1,38 +1,35 @@
-use compiler::{translate_to_rust_program, CompiledAB};
-use daemon::run_daemon;
-
-use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
-use std::{ffi::OsStr, path::Path};
-
+use std::{ffi::OsStr, io::Write, path::Path};
 mod analyzer;
 mod compiler;
+mod config;
 mod daemon;
 mod executor;
+mod logger;
 mod parser;
 mod runtime;
 mod shortcuts_map;
 mod symbol_table;
+use crate::{parser::ParsedProgram, symbol_table::SymbolTable};
+use compiler::{translate_to_rust_program, CompiledAB};
+use config::*;
+use daemon::{register_daemon, run_daemon};
+use logger::LoggerComponent;
 
-//TODO: FIX MULTIPLE SHORTCUT MODES PARSING
-const CALC_PREFIX: &str = "ab";
-const COMPILED_PREFIX: &str = "json";
-const OUTPUT_DIR: &str = "output";
-const OUTPUT_FILE_NAME: &str = "main.rs";
 fn main() {
     let mut args = std::env::args();
     let _current_path = args.next();
 
     let flag_or_source = args.next();
+    //TODO enable interpreter mode
+
     if flag_or_source.is_none() {
-        return run_interpreter();
+        // return run_interpreter();\
+
+        register_daemon();
     }
     let flag_or_source = flag_or_source.unwrap();
 
     match flag_or_source.trim() {
-        "-d" => {
-            // println!("daemon mode only");
-            run_daemon();
-        }
         "-c" => {
             eprintln!("* Compiling to rust *");
             let source = args.next().unwrap();
@@ -49,7 +46,15 @@ fn main() {
                 eprintln!("ERROR in '{} ' {}", source, res.unwrap_err())
             }
         }
+        "-d" => {
+            eprintln!("* Listner Mode *");
+            //TODO remove
+            let (_shutdown_tx, shutdown_rx) = std::sync::mpsc::channel();
+
+            run_daemon(shutdown_rx);
+        }
         _ => {
+            // println!("daemon mode only");
             let source = flag_or_source;
             let res = compile_and_execute_file(&source);
             if res.is_err() {
@@ -210,9 +215,14 @@ fn execute_precompiled(source_path: &str) -> Result<(), String> {
     let source_path = Path::new(source_path);
     let source_code = get_program_from_file(source_path, COMPILED_PREFIX)?;
 
-    let compiled = serde_json::from_str::<CompiledAB>(&source_code)
-        .expect(&format!("Couldnt deserealize {}", source_path.display()));
-
+    let compiled = serde_json::from_str::<CompiledAB>(&source_code);
+    if compiled.is_err() {
+        LoggerComponent::Daemon.log(
+            &format!("Couldnt deserealize {}", source_path.display()),
+            None,
+        );
+    }
+    let compiled = compiled.unwrap();
     let (code, mut variables) = compiled.get_code_variables();
     executor::execute_program(&mut variables, code)
 }

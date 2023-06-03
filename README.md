@@ -18,10 +18,10 @@ High level scripting language designed for hasle free system automation.
 
 ## Use:
 
-- `cargo r ` => If no file name is supplied , the interpreter mode starts.
+- `cargo r ` =>register daemon
 - `cargo r -- source.ab` => Run a .ab file.
 - `cargo r -- -c source.ab` => Convert a .ab file into .rs file.
-- `cargo r -d ` => Start the daemon to listen for shortcuts.
+- `cargo r -d ` => Start the daemon to listen for shortcuts
 
 ### Debug:
 

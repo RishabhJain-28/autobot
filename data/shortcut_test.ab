@@ -1,7 +1,7 @@
 
 
 on ctrl  alt  h : lang {
-    open "language.txt"
+    open "D:\Projects\Rust\Rust Projects\autobot\language.txt"
 }
 on shift  d : test {
     open "test\abc.txt"

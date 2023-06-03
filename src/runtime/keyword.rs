@@ -2,6 +2,8 @@ use std::os::windows;
 
 use serde::{Deserialize, Serialize};
 
+use crate::logger::LoggerComponent;
+
 #[derive(Debug, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Keywords {
     Open(OpenKeyword),
@@ -34,7 +36,11 @@ impl Keyword<&str> for OpenKeyword {
     fn execute_keyword(&self, path_arg: &str) -> Result<(), String> {
         println!("Opening : {:?}", &path_arg);
         match open::that(&String::from(path_arg)) {
-            Err(err) => Err(format!("Failed to open file '{}'\n\n {}", path_arg, err)),
+            Err(err) => {
+                LoggerComponent::Daemon.log("Error in opening shortcut file", None);
+
+                Err(format!("Failed to open file '{}'\n\n {}", path_arg, err))
+            }
             Ok(_) => Ok(()),
         }
     }
